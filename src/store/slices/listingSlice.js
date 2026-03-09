@@ -21,6 +21,11 @@ const listingSlice = createSlice({
         loading: false,
         error: null,
     },
+    reducers: {
+        resetPagination: (state) => {
+            state.pagination.currentPage = 1;
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchListings.pending, (state) => {
@@ -29,12 +34,9 @@ const listingSlice = createSlice({
             .addCase(fetchListings.fulfilled, (state, action) => {
                 state.loading = false;
 
-                // Agar page 1 hai toh naya data dalo, warna purane data mein naya data jod do
+                // save only first load data to reduce the redux ram  
                 if (action.payload.currentPage === 1) {
                     state.items = action.payload.listings;
-                } else {
-                    // Purane items aur naye listings ko merge kar rahe hain
-                    state.items = [...state.items, ...action.payload.listings];
                 }
 
                 // Pagination state update
@@ -49,4 +51,5 @@ const listingSlice = createSlice({
     }
 });
 
+export const { resetPagination } = listingSlice.actions;
 export default listingSlice.reducer;
