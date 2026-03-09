@@ -1,19 +1,44 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-// import { fetchListings } from '../store/slices/listingSlice'; // Future thunk
+import { fetchListings } from '../store/slices/listingSlice'; // Future thunk
 import ListingCard from '../components/ListingCard';
+import Toaster from '../components/Toaster';
 
 const Home = () => {
+    const dispatch = useDispatch();
+    const { items, loading } = useSelector(state => state.listings);
+
     // Dummy Data for UI testing (Jab tak backend connect nahi hota)
     const dummyListings = [
         { id: 1, title: "Manali Wooden Cottage", price: 2500, location: "Himachal", image: "https://images.unsplash.com/photo-1518780664697-55e3ad937233" },
         { id: 2, title: "Goa Beach Villa", price: 5000, location: "North Goa", image: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2" },
-        { id: 3, title: "Jaipur Heritage Stay", price: 3200, location: "Rajasthan", image: "https://images.unsplash.com/photo-1590050752117-23a9d7fc9ba1" },
+        { id: 3, title: "Jaipur Heritage Stay", price: 3200, location: "Rajasthan", image: "https://www.jaipurtravel.com/images/umaid-bhawan.jpg" },
         { id: 4, title: "Kerala Backwaters House", price: 4500, location: "Alleppey", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2" },
     ];
+    useEffect(() => {
+        let interval;
 
+        const attemptFetch = () => {
+            dispatch(fetchListings()).then((result) => {
+                // Agar data nahi mila (backend sleeping), toh 5 sec baad fir try karo
+                if (result.meta.requestStatus === 'rejected') {
+                    interval = setTimeout(attemptFetch, 5000);
+                }
+            });
+        };
+
+        if (items.length === 0) {
+            attemptFetch();
+        }
+
+        return () => clearTimeout(interval); // Cleanup on unmount
+    }, [dispatch, items.length]);
+
+    // Agar real data (items) hai toh wo dikhao, varna dummy
+    const displayData = items.length > 0 ? items : dummyListings;
     return (
         <div className="space-y-8 pb-10">
+            {loading && <Toaster message="Backend is loading real data..." />}
             {/* Hero Section */}
             <section className="relative h-[400px] rounded-3xl overflow-hidden flex items-center justify-center">
                 <img
