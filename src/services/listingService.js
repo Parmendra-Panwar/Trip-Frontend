@@ -1,3 +1,3 @@
-import api from './authService'; // Use the axios instance we created
+import api from './authService';
 
-export const fetchListingsApi = () => api.get('/listings');
+export const fetchListingsApi = (page = 1) => api.get(`/listings?page=${page}&limit=12`);

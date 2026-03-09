@@ -68,14 +68,14 @@ const authSlice = createSlice({
             })
             // 2. Generic Matchers (Bina variables ke string pattern use karo)
             .addMatcher(
-                (action) => action.type.endsWith('/pending'),
+                (action) => action.type.startsWith('auth/') && action.type.endsWith('/pending'),
                 (state) => {
                     state.loading = true;
                     state.error = null;
                 }
             )
             .addMatcher(
-                (action) => action.type.endsWith('/rejected'),
+                (action) => action.type.startsWith('auth/') && action.type.endsWith('/rejected'),
                 (state, action) => {
                     state.loading = false;
                     state.error = action.payload;
