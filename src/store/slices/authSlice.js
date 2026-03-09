@@ -17,11 +17,22 @@ export const getProfile = createAsyncThunk('auth/profile', async (_, { rejectWit
     catch (err) { return rejectWithValue("Session Expired"); }
 });
 
+const safeGetUser = () => {
+    try {
+        const user = localStorage.getItem('user');
+        // Check karo ki user null na ho aur valid JSON ho
+        return user && user !== "undefined" ? JSON.parse(user) : null;
+    } catch (e) {
+        return null;
+    }
+};
+
 // --- Slice ---
 const authSlice = createSlice({
     name: 'auth',
     initialState: {
-        user: JSON.parse(localStorage.getItem('user')) || null,
+        user: safeGetUser(),
+        // user: JSON.parse(localStorage.getItem('user')) || null,
         token: localStorage.getItem('token') || null,
         loading: false,
         error: null,
@@ -36,33 +47,40 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Pending for all
-            .addMatcher((action) => action.type.endsWith('/pending'), (state) => {
-                state.loading = true;
-                state.error = null;
+            // 1. Individually handle success (Zyaada stable hai)
+            .addCase(loginUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+                localStorage.setItem('token', action.payload.token);
+                localStorage.setItem('user', JSON.stringify(action.payload.user));
             })
-            // Login & Signup Success
-            .addMatcher(
-                (action) => [loginUser.fulfilled.type, signupUser.fulfilled.type].includes(action.type),
-                (state, action) => {
-                    state.loading = false;
-                    state.user = action.payload.user;
-                    state.token = action.payload.token;
-                    localStorage.setItem('token', action.payload.token);
-                    localStorage.setItem('user', JSON.stringify(action.payload.user));
-                }
-            )
-            // Profile Fetch Success
+            .addCase(signupUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+                localStorage.setItem('token', action.payload.token);
+                localStorage.setItem('user', JSON.stringify(action.payload.user));
+            })
             .addCase(getProfile.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.user;
-                // Note: Token usually doesn't change on profile fetch
             })
-            // Rejected for all
-            .addMatcher((action) => action.type.endsWith('/rejected'), (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            });
+            // 2. Generic Matchers (Bina variables ke string pattern use karo)
+            .addMatcher(
+                (action) => action.type.endsWith('/pending'),
+                (state) => {
+                    state.loading = true;
+                    state.error = null;
+                }
+            )
+            .addMatcher(
+                (action) => action.type.endsWith('/rejected'),
+                (state, action) => {
+                    state.loading = false;
+                    state.error = action.payload;
+                }
+            );
     }
 });
 
