@@ -12,10 +12,34 @@ const Home = () => {
     const [showFallback, setShowFallback] = useState(false); // 2 sec baad true hoga
 
     const dummyListings = [
-        { id: 1, title: "Manali Wooden Cottage", price: 2500, location: "Himachal", image: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=60" },
-        { id: 2, title: "Goa Beach Villa", price: 5000, location: "North Goa", image: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=60" },
-        { id: 3, title: "Jaipur Heritage Stay", price: 3200, location: "Rajasthan", image: "https://images.unsplash.com/photo-1590050752117-23a9d7fc9ba1?auto=format&fit=crop&w=800&q=60" },
-        { id: 4, title: "Kerala Backwaters House", price: 4500, location: "Alleppey", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=800&q=60" },
+        {
+            id: 1,
+            title: "Manali Wooden Cottage",
+            price: 2500,
+            location: "Himachal",
+            images: [{ url: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=60" }]
+        },
+        {
+            id: 2,
+            title: "Goa Beach Villa",
+            price: 5000,
+            location: "North Goa",
+            images: [{ url: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=60" }]
+        },
+        {
+            id: 3,
+            title: "Jaipur Heritage Stay",
+            price: 3200,
+            location: "Rajasthan",
+            images: [{ url: "https://images.unsplash.com/photo-1590050752117-23a9d7fc9ba1?auto=format&fit=crop&w=800&q=60" }]
+        },
+        {
+            id: 4,
+            title: "Kerala Backwaters House",
+            price: 4500,
+            location: "Alleppey",
+            images: [{ url: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=800&q=60" }]
+        },
     ];
 
     useEffect(() => {
@@ -63,7 +87,7 @@ const Home = () => {
     };
 
     // UI State Logic
-    const isFetchingInitialData = loading && localListings.length === 0;
+    const isFetchingInitialData = loading && localListings.length === 0
 
     return (
         <div className="space-y-8 pb-10">

@@ -4,7 +4,12 @@ import { signupUser, clearError } from '../store/slices/authSlice'; // signupUse
 import { useNavigate, Link } from 'react-router-dom';
 
 const Signup = () => {
-    const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+    const [formData, setFormData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        accountType: 'NORMAL'
+    });
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error } = useSelector((state) => state.auth);
@@ -23,7 +28,13 @@ const Signup = () => {
         <div className="flex flex-col items-center justify-center min-h-[80vh]">
             <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
                 <h2 className="text-3xl font-bold mb-6 text-slate-800">Create Account</h2>
-
+                <select className="w-full p-3 mb-4 rounded-lg border"
+                    onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
+                >
+                    <option value="NORMAL">Normal User (Traveler)</option>
+                    <option value="BUSINESS">Business (Provider)</option>
+                    <option value="MIXED">Mixed (Both)</option>
+                </select>
                 <input
                     type="text" placeholder="Username" required
                     className="w-full p-3 mb-4 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
