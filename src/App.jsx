@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import { getProfile } from './store/slices/authSlice';
+import SingleListing from './pages/SingleListing';
+import NotFound from './pages/NotFound';
 
 const Layout = () => (
   <div className="min-h-screen bg-slate-50">
@@ -24,8 +26,12 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
       { path: "signup", element: <Signup /> },
+      { path: "listing/:id", element: <SingleListing /> },
     ],
   },
+  {
+    path: "*", element: <NotFound />
+  }
 ]);
 
 function App() {
