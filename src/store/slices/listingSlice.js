@@ -46,7 +46,6 @@ const listingSlice = createSlice({
             .addCase(fetchListings.rejected, (state, action) => {
                 // state.loading = false;
                 state.error = action.payload;
-                console.log("Backend still waking up...");
             });
     }
 });
