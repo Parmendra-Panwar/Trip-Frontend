@@ -72,10 +72,11 @@ const AllListing = () => {
     }, [dispatch]);
 
     useEffect(() => {
-        if (items.length > 0 && localListings.length === 0) {
+        // Agar page 1 ka data (new load ya background refresh) aaya hai, toh reset kardo
+        if (pagination.currentPage === 1 && items.length > 0) {
             setLocalListings(items);
         }
-    }, [items, localListings.length]);
+    }, [items, pagination.currentPage]);
 
     const handleLoadMore = () => {
         if (pagination.currentPage < pagination.totalPages) {

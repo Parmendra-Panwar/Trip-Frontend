@@ -9,6 +9,10 @@ import { getProfile } from './store/slices/authSlice';
 import SingleListing from './pages/SingleListing';
 import NotFound from './pages/NotFound';
 import CreateListing from './pages/CreateListing';
+import Toaster from './components/Toaster';
+
+import { fetchListings } from './store/slices/listingSlice';
+import { resetCreateState } from './store/slices/createListingSlice';
 
 const Layout = () => (
   <div className="min-h-screen bg-slate-50">
@@ -39,12 +43,20 @@ const router = createBrowserRouter([
 function App() {
   const dispatch = useDispatch();
   const { loading, token, user } = useSelector((state) => state.auth);
+  const { uploading, success } = useSelector(state => state.createListing);
 
   useEffect(() => {
     if (token && !user) {
       dispatch(getProfile());
     }
   }, [dispatch, token, user]);
+
+  useEffect(() => {
+    if (success) {
+      dispatch(fetchListings(1)); // Global fetch on success
+      dispatch(resetCreateState()); // Reset state
+    }
+  }, [success, dispatch]);
 
   return (
     <>
@@ -54,6 +66,7 @@ function App() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
         </div>
       )}
+      {uploading && <Toaster message="Uploading your magic spot... 🚀" />}
 
       <RouterProvider router={router} />
     </>

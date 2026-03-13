@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { submitNewListing, resetCreateState } from '../store/slices/createListingSlice';
-import Toaster from '../components/Toaster';
+import { submitNewListing } from '../store/slices/createListingSlice';
+
 
 const CreateListing = () => {
     const { user } = useSelector(state => state.auth);
-    const { uploading, error, success } = useSelector(state => state.createListing);
+    const { uploading, error } = useSelector(state => state.createListing);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -29,13 +29,6 @@ const CreateListing = () => {
     useEffect(() => {
         return () => previews.forEach(url => URL.revokeObjectURL(url));
     }, [previews]);
-
-    useEffect(() => {
-        if (success) {
-            dispatch(resetCreateState());
-            navigate('/listings');
-        }
-    }, [success, navigate, dispatch]);
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files).slice(0, 7);
@@ -72,12 +65,12 @@ const CreateListing = () => {
         });
 
         dispatch(submitNewListing(data));
+
+        navigate('/');
     };
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {uploading && <Toaster message="Uploading your magic spot... 🚀" />}
-
             <div className="space-y-8">
                 <div>
                     <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Host your place</h1>
