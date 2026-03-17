@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { fetchListingById } from '../services/listingService';
 import ImageModal from '../components/ImageModal';
+import ReviewSection from '../components/ReviewSection';
 
 const SingleListing = () => {
     const { id } = useParams();
@@ -32,6 +33,16 @@ const SingleListing = () => {
 
         if (id) loadData();
     }, [id]);
+
+    const handleNewReview = (newReview) => {
+        setListing(prev => ({
+            ...prev,
+            listing: {
+                ...prev.listing,
+                reviews: [...prev.listing.reviews, newReview]
+            }
+        }));
+    };
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
@@ -107,20 +118,12 @@ const SingleListing = () => {
                     </div>
 
                     {/* Reviews Section */}
-                    <div className="border-t pt-8">
-                        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                            ★ {data?.reviews?.length > 0 ? "5.0" : "New"} · {data?.reviews?.length} Reviews
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {data?.reviews?.map(rev => (
-                                <div key={rev._id} className="p-4 border rounded-2xl bg-slate-50">
-                                    <p className="font-bold text-slate-800">{rev.author?.username || "Guest User"}</p>
-                                    <p className="text-xs text-slate-500 mb-2">{new Date(rev.createdAt).toLocaleDateString()}</p>
-                                    <p className="text-slate-600">"{rev.comment}"</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <ReviewSection
+                        reviews={data?.reviews}
+                        entityType="listings" // Changes to "trips" or "activities" in other pages
+                        entityId={id}
+                        onReviewAdded={handleNewReview}
+                    />
                 </div>
 
                 {/* Right Side: Sticky Booking Card */}

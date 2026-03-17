@@ -13,6 +13,7 @@ import Toaster from './components/Toaster';
 
 import { fetchListings } from './store/slices/listingSlice';
 import { resetCreateState } from './store/slices/createListingSlice';
+import ProfilePage from './pages/ProfilePage';
 
 const Layout = () => (
   <div className="min-h-screen bg-slate-50">
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
       { path: "signup", element: <Signup /> },
       { path: "listing/:id", element: <SingleListing /> },
       { path: "createlisting", element: <CreateListing /> },
+      { path: "profile/:username", element: <ProfilePage /> },
     ],
   },
   {

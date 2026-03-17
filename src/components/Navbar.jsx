@@ -21,9 +21,12 @@ const Navbar = () => {
             <div className="flex items-center gap-6">
                 {user ? (
                     <div className="flex items-center gap-4">
-                        <span className="text-slate-700 font-medium hidden sm:block">
+                        <Link
+                            to={`/profile/${user.username}`}
+                            className="text-slate-700 font-medium hidden sm:block hover:text-blue-600 transition-colors"
+                        >
                             Hi, {user.username}
-                        </span>
+                        </Link>
                         <button
                             onClick={handleLogout}
                             className="bg-slate-100 text-slate-700 px-4 py-2 rounded-full font-bold hover:bg-red-50 hover:text-red-600 transition-colors"
