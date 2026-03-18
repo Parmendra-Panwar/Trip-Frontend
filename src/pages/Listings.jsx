@@ -1,6 +1,7 @@
-import AllListing from '../components/AllListing';
+import AllListing from "../components/AllListing";
 
-const Home = () => {
+
+const Listings = () => {
     return (
         <div className="pb-32 min-h-screen bg-white">
             {/* Massive Brand Statement Hero */}
@@ -58,4 +59,4 @@ const Home = () => {
     );
 };
 
-export default Home;
+export default Listings;

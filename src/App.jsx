@@ -28,11 +28,14 @@ import { resetCreateActivityState } from './store/slices/createActivitySlice';
 import { fetchTrips } from './store/slices/tripSlice';
 import { resetCreateTripState } from './store/slices/createTripSlice';
 import ProfilePage from './pages/ProfilePage';
+import Activities from './pages/Activities';
+import Listings from './pages/Listings';
+import Trips from './pages/Trips';
 
 const Layout = () => (
-  <div className="min-h-screen bg-slate-50">
+  <div className="min-h-[100dvh] bg-slate-50 flex flex-col">
     <Navbar />
-    <main className="max-w-7xl mx-auto p-4">
+    <main className="flex-1 w-full flex flex-col pt-1">
       <Outlet />
     </main>
   </div>
@@ -46,14 +49,19 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
       { path: "signup", element: <Signup /> },
+
+      { path: "activities", element: <Activities /> },
+      { path: "listings", element: <Listings /> },
+      { path: "trips", element: <Trips /> },
+
       { path: "listing/:id", element: <SingleListing /> },
       { path: "createlisting", element: <CreateListing /> },
       { path: "edit-listing/:id", element: <EditListing /> },
-      
+
       { path: "activity/:id", element: <SingleActivity /> },
       { path: "createactivity", element: <CreateActivity /> },
       { path: "edit-activity/:id", element: <EditActivity /> },
-      
+
       { path: "trip/:id", element: <SingleTrip /> },
       { path: "createtrip", element: <CreateTrip /> },
       { path: "edit-trip/:id", element: <EditTrip /> },

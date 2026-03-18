@@ -1,6 +1,6 @@
-import AllListing from '../components/AllListing';
+import AllActivity from '../components/AllActivity';
 
-const Home = () => {
+const Activities = () => {
     return (
         <div className="pb-32 min-h-screen bg-white">
             {/* Massive Brand Statement Hero */}
@@ -51,11 +51,11 @@ const Home = () => {
             {/* Feeds Section */}
             <div className="border-t border-[#EBEBEB] bg-[#FAFAFA] pt-4">
                 <div className="max-w-[1440px] mx-auto px-6 md:px-10 space-y-12">
-                    <AllListing />
+                    <AllActivity />
                 </div>
             </div>
         </div>
     );
 };
 
-export default Home;
+export default Activities;

@@ -95,33 +95,32 @@ const AllListing = () => {
     const shouldShowToaster = items.length === 0 && showFallback;
 
     return (
-        <div className="space-y-8 pb-10">
-            {/* Permanent Toaster during fallback state */}
+        <div className="w-full">
             {shouldShowToaster && (
                 <Toaster message="Backend is waking up, showing preview..." />
             )}
 
             <div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-6">
+                <h2 className="text-[26px] font-[600] text-[#222222] tracking-tight mb-6 mt-6">
                     {items.length > 0 ? "Trending Destinations" : "Featured Preview"}
                 </h2>
 
                 {/* Grid logic: Real Data -> Dummy Data -> Spinner */}
                 {items.length > 0 ? (
                     // 1. Real data from backend
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
                         {items.map(item => <ListingCard key={item._id} data={item} />)}
                     </div>
                 ) : showFallback ? (
                     // 2. Server taking time/failed: show Dummy
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 opacity-70">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 opacity-80">
                         {dummyListings.map(item => <ListingCard key={item._id} data={item} />)}
                     </div>
                 ) : (
                     // 3. Initial 2 seconds: show Spinner
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-slate-500 font-medium">Finding the best stays for you...</p>
+                    <div className="flex flex-col items-center justify-center py-[100px] bg-[#F7F7F7] rounded-[1.5rem] my-4">
+                        <div className="w-[40px] h-[40px] border-[3px] border-[#EBEBEB] border-t-[#222222] rounded-full animate-spin mb-6"></div>
+                        <p className="text-[#222222] font-[500] text-[15px] tracking-tight">Finding the best stays for you...</p>
                     </div>
                 )}
 
@@ -131,7 +130,7 @@ const AllListing = () => {
                         <button
                             disabled={loading}
                             onClick={handleLoadMore}
-                            className="px-8 py-3 bg-slate-900 text-white rounded-full font-bold shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                            className="px-6 py-3.5 bg-[#222222] text-white rounded-[10px] text-[15px] font-[600] transition-transform hover:bg-black active:scale-95 disabled:opacity-50"
                         >
                             {loading ? "Loading..." : "Load More Destinations"}
                         </button>
