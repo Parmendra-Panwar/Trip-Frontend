@@ -23,8 +23,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Agar token expire ho jaye ya invalid ho, toh auto-logout kar do
-        if (error.response && error.response.status === 401) {
+        // Agar 401 hai AND request login API ke liye NAHI hai, tabhi redirect karo
+        if (error.response && error.response.status === 401 && !error.config.url.includes('/auth/login')) {
             localStorage.clear();
             window.location.href = '/login';
         }

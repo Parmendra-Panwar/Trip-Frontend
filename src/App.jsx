@@ -6,6 +6,14 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import { getProfile } from './store/slices/authSlice';
+import SingleListing from './pages/SingleListing';
+import NotFound from './pages/NotFound';
+import CreateListing from './pages/CreateListing';
+import Toaster from './components/Toaster';
+
+import { fetchListings } from './store/slices/listingSlice';
+import { resetCreateState } from './store/slices/createListingSlice';
+import ProfilePage from './pages/ProfilePage';
 
 const Layout = () => (
   <div className="min-h-screen bg-slate-50">
@@ -24,13 +32,20 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
       { path: "signup", element: <Signup /> },
+      { path: "listing/:id", element: <SingleListing /> },
+      { path: "createlisting", element: <CreateListing /> },
+      { path: "profile/:username", element: <ProfilePage /> },
     ],
   },
+  {
+    path: "*", element: <NotFound />
+  }
 ]);
 
 function App() {
   const dispatch = useDispatch();
   const { loading, token, user } = useSelector((state) => state.auth);
+  const { uploading, success } = useSelector(state => state.createListing);
 
   useEffect(() => {
     if (token && !user) {
@@ -38,16 +53,26 @@ function App() {
     }
   }, [dispatch, token, user]);
 
-  // Agar token hai par user data aa raha hai, toh pura app rok do
-  if (loading && token) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (success) {
+      dispatch(fetchListings(1)); // Global fetch on success
+      dispatch(resetCreateState()); // Reset state
+    }
+  }, [success, dispatch]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      {/* Spinner as a fixed overlay so Router never unmounts */}
+      {loading && token && !user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+      {uploading && <Toaster message="Uploading your magic spot... 🚀" />}
+
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;

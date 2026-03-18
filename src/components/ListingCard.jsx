@@ -1,20 +1,23 @@
 import { Link } from 'react-router-dom';
 
 const ListingCard = ({ data }) => {
-    // Backend se _id aata hai, dummy se id. Backend se image.url aata hai, dummy se direct image.
     const id = data._id || data.id;
-    const imageUrl = data.image?.url || data.image;
+
+    // Logic: Agar images array hai toh uska 1st element lo, 
+    // nahi toh purana data.image.url dekho, ya fir direct data.image (dummy ke liye)
+    const primaryImage = (data.images && data.images.length > 0 && data.images[0])
+        ? data.images[0].url
+        : (data.image?.url || data.image || "https://via.placeholder.com/400");
 
     return (
         <Link to={`/listing/${id}`} className="group cursor-pointer">
             <div className="flex flex-col gap-3">
                 <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 shadow-md">
                     <img
-                        src={imageUrl}
+                        src={primaryImage}
                         alt={data.title}
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    {/* Heart Icon remains same */}
                 </div>
 
                 <div className="flex flex-col">

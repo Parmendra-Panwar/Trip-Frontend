@@ -1,16 +1,72 @@
-# React + Vite
+# TripLinker Mobile App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+TripLinker is a high-performance React application designed for the modern traveler. It bridges the gap between social networking and travel planning, offering seamless booking experiences alongside community engagement.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### User Ecosystem
+- **Dual Interface:** Toggle between standard 'Traveler' and 'Business' profiles.
+- **Social Graph:** Follow fellow travelers, share stories, and build your travel network.
+- **Community Groups:** Join "Style-based" travel groups (e.g., Solo Backpackers, Luxury Seekers).
 
-## React Compiler
+### AI-Powered Exploration (Premium UI)
+- **Smart Itinerary Generator:** Generates custom travel plans based on real-time listing data and user preferences.
+- **AI Recommendations:** Personalized activity suggestions using mock-AI logic for a futuristic UX.
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+### Business & Booking
+- **Unified Explore Page:** Real-time search for properties (stays) and activities.
+- **Interactive Maps:** Visualized locations using Leaflet/Mapbox (integrated with backend geocoding).
+- **Review System:** High-fidelity rating and review interaction.
 
-## Expanding the ESLint configuration
+### Travel Feed
+- **Visual Stories:** Post journey photos, write travelogues, and interact with the community feed.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech Stack
+
+- **Framework:** React / React Native
+- **State Management:** Redux Toolkit / Context API
+- **Networking:** Axios (with Interceptors for JWT handling)
+- **Styling:** Tailwind CSS / NativeWind
+- **Animations:** Framer Motion / Reanimated (for premium AI loading states)
+
+## Project Structure
+
+```text
+├── src/
+│   ├── api/            # Axios instance & API services
+│   ├── components/     # Reusable UI (Cards, Loaders, Modals)
+│   ├── context/        # Auth & Theme State
+│   ├── hooks/          # Custom hooks (useAuth, useLocation)
+│   ├── screens/        # Main App Screens (Feed, Explore, AI Planner)
+│   └── utils/          # Formatting & Helpers
+
+```
+
+## 🏁 Getting Started
+
+1. **Clone the repo:**
+```bash
+git clone https://github.com/Parmendra-Panwar/TripLinkerApp.git
+
+```
+
+
+2. **Install dependencies:**
+```bash
+npm install
+
+```
+
+
+3. **Environment Setup:**
+Create a `.env` file:
+* `REACT_APP_API_URL=your_backend_url`
+
+
+4. **Run Project:**
+```bash
+npm start
+
+```
+
+*Developed by Paras - AI & ML Enthusiast*
