@@ -17,9 +17,6 @@ const Navbar = () => {
         <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3 flex justify-between items-center sticky top-0 z-50">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
-                <div className="bg-blue-600 p-1.5 rounded-lg group-hover:rotate-3 transition-transform">
-                    <div className="w-5 h-5 border-2 border-white rounded-sm rotate-45" />
-                </div>
                 <span className="text-xl font-black text-slate-900 tracking-tight">
                     TRIPLINKER<span className="text-blue-600">.</span>
                 </span>

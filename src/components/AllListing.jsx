@@ -11,7 +11,6 @@ const AllListing = () => {
     const { items = [], loading, hasNextPage } = useSelector(state => state.listings || {});
 
     // Local states
-    const [localListings, setLocalListings] = useState([]);
     const [showFallback, setShowFallback] = useState(false);
 
     const dummyListings = [
@@ -75,24 +74,14 @@ const AllListing = () => {
         };
     }, [dispatch]);
 
-    // 2. Sync Redux items with Local State (First load only)
-    useEffect(() => {
-        if (items.length > 0 && localListings.length === 0) {
-            setLocalListings(items);
-        }
-    }, [items]);
+    // 2. Local state sync removed - using Redux state directly
 
     // 3. Load More logic (Cursor-based)
     const handleLoadMore = () => {
-        const lastId = localListings[localListings.length - 1]?._id;
+        const lastId = items[items.length - 1]?._id;
 
         if (lastId && !loading) {
             dispatch(fetchListings(lastId))
-                .unwrap()
-                .then((payload) => {
-                    // Append only to local state to save Redux RAM
-                    setLocalListings(prev => [...prev, ...payload.listings]);
-                })
                 .catch((err) => console.error("Pagination Error:", err));
         }
     };
@@ -103,7 +92,7 @@ const AllListing = () => {
      * Jab tak localListings khali hain aur 2 sec beet chuke hain, 
      * tab tak toaster permanent dikhega (chahe loading true ho ya retry wait mein false).
      */
-    const shouldShowToaster = localListings.length === 0 && showFallback;
+    const shouldShowToaster = items.length === 0 && showFallback;
 
     return (
         <div className="space-y-8 pb-10">
@@ -114,14 +103,14 @@ const AllListing = () => {
 
             <div>
                 <h2 className="text-2xl font-bold text-slate-800 mb-6">
-                    {localListings.length > 0 ? "Trending Destinations" : "Featured Preview"}
+                    {items.length > 0 ? "Trending Destinations" : "Featured Preview"}
                 </h2>
 
                 {/* Grid logic: Real Data -> Dummy Data -> Spinner */}
-                {localListings.length > 0 ? (
+                {items.length > 0 ? (
                     // 1. Real data from backend
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {localListings.map(item => <ListingCard key={item._id} data={item} />)}
+                        {items.map(item => <ListingCard key={item._id} data={item} />)}
                     </div>
                 ) : showFallback ? (
                     // 2. Server taking time/failed: show Dummy
@@ -137,7 +126,7 @@ const AllListing = () => {
                 )}
 
                 {/* Load More Button */}
-                {localListings.length > 0 && hasNextPage && (
+                {items.length > 0 && hasNextPage && (
                     <div className="mt-12 flex justify-center">
                         <button
                             disabled={loading}

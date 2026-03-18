@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
-import { fetchListingById } from '../services/listingService';
+import { useSelector, useDispatch } from 'react-redux';
+import { deleteListingApi, fetchListingById } from '../services/listingService';
+import { removeListing } from '../store/slices/listingSlice';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 
 import ImageModal from '../components/ImageModal';
@@ -10,6 +11,7 @@ import ReviewSection from '../components/ReviewSection';
 const SingleListing = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const { user: currentUser } = useSelector((state) => state.auth);
 
@@ -46,10 +48,20 @@ const SingleListing = () => {
         if (id) loadData();
     }, [id]);
 
-    const handleDelete = async () => {
-        if (window.confirm("Are you sure you want to delete this listing?")) {
-            // await deleteListingApi(id);
+    const handleDelete = () => {
+        if (window.confirm("Are you sure Want to delete?")) {
+            setLoading(true);
+            // 1. Navigate immediately so user doesn't wait
             navigate('/');
+            
+            // 2. Perform delete in background
+            deleteListingApi(id)
+                .then(() => {
+                    dispatch(removeListing(id)); // Sync with Redux state
+                })
+                .catch((error) => {
+                    console.error("Delete failed!", error);
+                });
         }
     };
 

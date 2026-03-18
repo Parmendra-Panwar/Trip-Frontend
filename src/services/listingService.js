@@ -12,3 +12,13 @@ export const createListingApi = (formData) => {
         },
     });
 };
+
+export const updateListingApi = (id, formData) => {
+    return api.put(`/listings/${id}`, formData, {
+        headers: {
+            'Content-Type': undefined,
+        },
+    });
+};
+
+export const deleteListingApi = (id) => api.delete(`/listings/${id}`)

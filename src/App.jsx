@@ -9,6 +9,7 @@ import { getProfile } from './store/slices/authSlice';
 import SingleListing from './pages/SingleListing';
 import NotFound from './pages/NotFound';
 import CreateListing from './pages/CreateListing';
+import EditListing from './pages/EditListing';
 import Toaster from './components/Toaster';
 
 import { fetchListings } from './store/slices/listingSlice';
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
       { path: "signup", element: <Signup /> },
       { path: "listing/:id", element: <SingleListing /> },
       { path: "createlisting", element: <CreateListing /> },
+      { path: "edit-listing/:id", element: <EditListing /> },
       { path: "profile/:username", element: <ProfilePage /> },
     ],
   },
