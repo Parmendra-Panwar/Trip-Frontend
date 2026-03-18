@@ -15,12 +15,18 @@ import SingleActivity from './pages/SingleActivity';
 import CreateActivity from './pages/CreateActivity';
 import EditActivity from './pages/EditActivity';
 
+import SingleTrip from './pages/SingleTrip';
+import CreateTrip from './pages/CreateTrip';
+import EditTrip from './pages/EditTrip';
+
 import Toaster from './components/Toaster';
 
 import { fetchListings } from './store/slices/listingSlice';
 import { resetCreateState } from './store/slices/createListingSlice';
 import { fetchActivities } from './store/slices/activitySlice';
 import { resetCreateActivityState } from './store/slices/createActivitySlice';
+import { fetchTrips } from './store/slices/tripSlice';
+import { resetCreateTripState } from './store/slices/createTripSlice';
 import ProfilePage from './pages/ProfilePage';
 
 const Layout = () => (
@@ -48,6 +54,10 @@ const router = createBrowserRouter([
       { path: "createactivity", element: <CreateActivity /> },
       { path: "edit-activity/:id", element: <EditActivity /> },
       
+      { path: "trip/:id", element: <SingleTrip /> },
+      { path: "createtrip", element: <CreateTrip /> },
+      { path: "edit-trip/:id", element: <EditTrip /> },
+
       { path: "profile/:username", element: <ProfilePage /> },
     ],
   },
@@ -61,6 +71,7 @@ function App() {
   const { loading, token, user } = useSelector((state) => state.auth);
   const { uploading: listingUploading, success: listingSuccess } = useSelector(state => state.createListing);
   const { uploading: activityUploading, success: activitySuccess } = useSelector(state => state.createActivity);
+  const { uploading: tripUploading, success: tripSuccess } = useSelector(state => state.createTrip);
 
   useEffect(() => {
     if (token && !user) {
@@ -77,7 +88,11 @@ function App() {
       dispatch(fetchActivities(''));
       dispatch(resetCreateActivityState());
     }
-  }, [listingSuccess, activitySuccess, dispatch]);
+    if (tripSuccess) {
+      dispatch(fetchTrips(''));
+      dispatch(resetCreateTripState());
+    }
+  }, [listingSuccess, activitySuccess, tripSuccess, dispatch]);
 
   return (
     <>
@@ -87,7 +102,7 @@ function App() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
         </div>
       )}
-      {(listingUploading || activityUploading) && <Toaster message="Uploading your magic spot... 🚀" />}
+      {(listingUploading || activityUploading || tripUploading) && <Toaster message="Uploading your memory... 🚀" />}
 
       <RouterProvider router={router} />
     </>

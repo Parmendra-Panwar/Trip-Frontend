@@ -5,6 +5,8 @@ import createListingReducer from './slices/createListingSlice';
 import profileReducer from './slices/profileSlice';
 import activityReducer from './slices/activitySlice';
 import createActivityReducer from './slices/createActivitySlice';
+import tripReducer from './slices/tripSlice';
+import createTripReducer from './slices/createTripSlice';
 
 export const store = configureStore({
     reducer: {
@@ -14,6 +16,8 @@ export const store = configureStore({
         profile: profileReducer,
         activities: activityReducer,
         createActivity: createActivityReducer,
+        trips: tripReducer,
+        createTrip: createTripReducer,
     },
 });
 

@@ -1,5 +1,7 @@
 import AllListing from '../components/AllListing';
 import AllActivity from '../components/AllActivity';
+import AllTrip from '../components/AllTrip';
+
 const Home = () => {
     return (
         <div className="space-y-8 pb-10">
@@ -30,6 +32,7 @@ const Home = () => {
 
             <AllListing />
             <AllActivity />
+            <AllTrip />
         </div>
     );
 };

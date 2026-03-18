@@ -38,7 +38,7 @@ const Navbar = () => {
                                 </>
                             )}
                             {isNormal && (
-                                <Link to="/post-trip" className={linkStyle('/post-trip')}>
+                                <Link to="/createtrip" className={linkStyle('/createtrip')}>
                                     Post a Trip
                                 </Link>
                             )}
