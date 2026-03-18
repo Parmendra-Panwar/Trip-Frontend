@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchListings } from '../store/slices/listingSlice';
+import { fetchListingsApi } from '../services/listingService';
 import ListingCard from '../components/ListingCard';
 import Toaster from '../components/Toaster';
 
 const AllListing = () => {
     const dispatch = useDispatch();
 
-    // Redux selectors
-    const { items = [], loading, hasNextPage } = useSelector(state => state.listings || {});
+    // Redux selectors (Only stores the first 12 items)
+    const { items: reduxItems = [], loading: reduxLoading, hasNextPage: reduxHasNextPage } = useSelector(state => state.listings || {});
 
-    // Local states
+    // Local states for pagination and fallbacks
+    const [extraItems, setExtraItems] = useState([]);
+    const [localHasNextPage, setLocalHasNextPage] = useState(null);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [showFallback, setShowFallback] = useState(false);
+
+    const allItems = [...reduxItems, ...extraItems];
+    const finalHasNextPage = localHasNextPage !== null ? localHasNextPage : reduxHasNextPage;
 
     const dummyListings = [
         {
@@ -56,16 +63,16 @@ const AllListing = () => {
         const attemptFetch = () => {
             if (!isMounted) return;
 
+            // Fetch only the first page via Redux
             dispatch(fetchListings('')).then((result) => {
                 if (!isMounted) return;
-                // Agar request reject hui, toh 5 sec baad retry karo
-                if (result.meta.requestStatus === 'rejected') {
+                if (result.meta?.requestStatus === 'rejected') {
                     retryInterval = setTimeout(attemptFetch, 5000);
                 }
             });
         };
 
-        if (items.length === 0) attemptFetch();
+        if (reduxItems.length === 0) attemptFetch();
 
         return () => {
             isMounted = false;
@@ -74,25 +81,28 @@ const AllListing = () => {
         };
     }, [dispatch]);
 
-    // 2. Local state sync removed - using Redux state directly
+    // 2. Load More logic (Stored strictly in RAM locally, not Redux)
+    const handleLoadMore = async () => {
+        const lastId = allItems[allItems.length - 1]?._id;
 
-    // 3. Load More logic (Cursor-based)
-    const handleLoadMore = () => {
-        const lastId = items[items.length - 1]?._id;
-
-        if (lastId && !loading) {
-            dispatch(fetchListings(lastId))
-                .catch((err) => console.error("Pagination Error:", err));
+        if (lastId && !loadingMore) {
+            setLoadingMore(true);
+            try {
+                const response = await fetchListingsApi(lastId);
+                const fetchedItems = response.data?.listings || response.data || [];
+                
+                // Keep RAM efficient: Append to local memory only
+                setExtraItems(prev => [...prev, ...fetchedItems]);
+                setLocalHasNextPage(response.data?.hasNextPage || false);
+            } catch (err) {
+                console.error("Pagination Error:", err);
+            } finally {
+                setLoadingMore(false);
+            }
         }
     };
 
-    /**
-     * TOASTER LOGIC FIX:
-     * Hum loading state ko condition se hata rahe hain. 
-     * Jab tak localListings khali hain aur 2 sec beet chuke hain, 
-     * tab tak toaster permanent dikhega (chahe loading true ho ya retry wait mein false).
-     */
-    const shouldShowToaster = items.length === 0 && showFallback;
+    const shouldShowToaster = reduxItems.length === 0 && showFallback;
 
     return (
         <div className="w-full">
@@ -102,22 +112,19 @@ const AllListing = () => {
 
             <div>
                 <h2 className="text-[26px] font-[600] text-[#222222] tracking-tight mb-6 mt-6">
-                    {items.length > 0 ? "Trending Destinations" : "Featured Preview"}
+                    {allItems.length > 0 ? "Trending Destinations" : "Featured Preview"}
                 </h2>
 
                 {/* Grid logic: Real Data -> Dummy Data -> Spinner */}
-                {items.length > 0 ? (
-                    // 1. Real data from backend
+                {allItems.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
-                        {items.map(item => <ListingCard key={item._id} data={item} />)}
+                        {allItems.map(item => <ListingCard key={item._id} data={item} />)}
                     </div>
                 ) : showFallback ? (
-                    // 2. Server taking time/failed: show Dummy
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 opacity-80">
                         {dummyListings.map(item => <ListingCard key={item._id} data={item} />)}
                     </div>
                 ) : (
-                    // 3. Initial 2 seconds: show Spinner
                     <div className="flex flex-col items-center justify-center py-[100px] bg-[#F7F7F7] rounded-[1.5rem] my-4">
                         <div className="w-[40px] h-[40px] border-[3px] border-[#EBEBEB] border-t-[#222222] rounded-full animate-spin mb-6"></div>
                         <p className="text-[#222222] font-[500] text-[15px] tracking-tight">Finding the best stays for you...</p>
@@ -125,14 +132,14 @@ const AllListing = () => {
                 )}
 
                 {/* Load More Button */}
-                {items.length > 0 && hasNextPage && (
+                {allItems.length > 0 && finalHasNextPage && (
                     <div className="mt-12 flex justify-center">
                         <button
-                            disabled={loading}
+                            disabled={loadingMore}
                             onClick={handleLoadMore}
                             className="px-6 py-3.5 bg-[#222222] text-white rounded-[10px] text-[15px] font-[600] transition-transform hover:bg-black active:scale-95 disabled:opacity-50"
                         >
-                            {loading ? "Loading..." : "Load More Destinations"}
+                            {loadingMore ? "Loading..." : "Load More Destinations"}
                         </button>
                     </div>
                 )}

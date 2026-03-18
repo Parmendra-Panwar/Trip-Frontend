@@ -37,13 +37,9 @@ const listingSlice = createSlice({
                 state.loading = false;
                 if (!action.meta.arg) {
                     state.items = action.payload.listings;
-                } else {
-                    // Append new items while preventing duplicates
-                    const existingIds = new Set(state.items.map(i => i._id));
-                    const newItems = action.payload.listings.filter(i => !existingIds.has(i._id));
-                    state.items = [...state.items, ...newItems];
+                    state.hasNextPage = action.payload.hasNextPage;
                 }
-                state.hasNextPage = action.payload.hasNextPage;
+                // We ignore paginated fetches in Redux to save RAM.
             })
             .addCase(fetchListings.rejected, (state, action) => {
                 state.loading = false;

@@ -1,14 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { logout } from '../store/slices/authSlice';
 
 const Navbar = () => {
+    const dispatch = useDispatch();
+
     const { user } = useSelector((state) => state.auth);
     const location = useLocation();
     const navigate = useNavigate();
 
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef(null);
+
+    const handleLogout = () => {
+        dispatch(logout());
+        navigate('/');
+    };
 
     const isBusiness = user?.roles?.includes('BUSINESS');
     const isNormal = user?.roles?.includes('NORMAL');
@@ -99,7 +107,7 @@ const Navbar = () => {
                                         )}
 
                                         <div className="h-[1px] bg-gray-100 my-1"></div>
-                                        <button className="cursor-pointer w-full text-left px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors">Logout</button>
+                                        <button onClick={handleLogout} className="cursor-pointer w-full text-left px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors">Logout</button>
                                     </div>
                                 )}
                             </div>

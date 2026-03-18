@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTrips } from '../store/slices/tripSlice';
+import { fetchTripsApi } from '../services/tripService';
 import TripCard from './TripCard';
 import Toaster from './Toaster';
 
 const AllTrip = () => {
     const dispatch = useDispatch();
 
-    const { items = [], loading, hasNextPage } = useSelector(state => state.trips || {});
+    const { items: reduxItems = [], loading: reduxLoading, hasNextPage: reduxHasNextPage } = useSelector(state => state.trips || {});
 
+    const [extraItems, setExtraItems] = useState([]);
+    const [localHasNextPage, setLocalHasNextPage] = useState(null);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [showFallback, setShowFallback] = useState(false);
+
+    const allItems = [...reduxItems, ...extraItems];
+    const finalHasNextPage = localHasNextPage !== null ? localHasNextPage : reduxHasNextPage;
 
     const dummyTrips = [
         {
@@ -61,7 +68,7 @@ const AllTrip = () => {
             });
         };
 
-        if (items.length === 0) attemptFetch();
+        if (reduxItems.length === 0) attemptFetch();
 
         return () => {
             isMounted = false;
@@ -70,16 +77,26 @@ const AllTrip = () => {
         };
     }, [dispatch]);
 
-    const handleLoadMore = () => {
-        const lastId = items[items.length - 1]?._id;
+    const handleLoadMore = async () => {
+        const lastId = allItems[allItems.length - 1]?._id;
 
-        if (lastId && !loading) {
-            dispatch(fetchTrips(lastId))
-                .catch((err) => console.error("Pagination Error:", err));
+        if (lastId && !loadingMore) {
+            setLoadingMore(true);
+            try {
+                const response = await fetchTripsApi(lastId);
+                const fetchedItems = response.data?.trips || response.data || [];
+                
+                setExtraItems(prev => [...prev, ...fetchedItems]);
+                setLocalHasNextPage(response.data?.hasNextPage || false);
+            } catch (err) {
+                console.error("Pagination Error:", err);
+            } finally {
+                setLoadingMore(false);
+            }
         }
     };
 
-    const shouldShowToaster = items.length === 0 && showFallback;
+    const shouldShowToaster = reduxItems.length === 0 && showFallback;
 
     return (
         <div className="w-full">
@@ -89,12 +106,12 @@ const AllTrip = () => {
 
             <div>
                 <h2 className="text-[26px] font-[600] text-[#222222] tracking-tight mb-6 border-t border-[#EBEBEB] pt-12">
-                    {items.length > 0 ? "Shared Trips & Journeys" : "Featured Trips"}
+                    {allItems.length > 0 ? "Shared Trips & Journeys" : "Featured Trips"}
                 </h2>
 
-                {items.length > 0 ? (
+                {allItems.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
-                        {items.map(item => <TripCard key={item._id} data={item} />)}
+                        {allItems.map(item => <TripCard key={item._id} data={item} />)}
                     </div>
                 ) : showFallback ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 opacity-80">
@@ -107,14 +124,14 @@ const AllTrip = () => {
                     </div>
                 )}
 
-                {items.length > 0 && hasNextPage && (
+                {allItems.length > 0 && finalHasNextPage && (
                     <div className="mt-12 flex justify-center">
                         <button
-                            disabled={loading}
+                            disabled={loadingMore}
                             onClick={handleLoadMore}
                             className="px-6 py-3.5 bg-[#222222] text-white rounded-[10px] text-[15px] font-[600] transition-transform hover:bg-black active:scale-95 disabled:opacity-50"
                         >
-                            {loading ? "Loading..." : "Load More Trips"}
+                            {loadingMore ? "Loading..." : "Load More Trips"}
                         </button>
                     </div>
                 )}

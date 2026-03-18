@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchActivities } from '../store/slices/activitySlice';
+import { fetchActivitiesApi } from '../services/activityService';
 import ActivityCard from '../components/ActivityCard';
 import Toaster from '../components/Toaster';
 
 const AllActivity = () => {
     const dispatch = useDispatch();
 
-    const { items = [], loading, hasNextPage } = useSelector(state => state.activities || {});
+    const { items: reduxItems = [], loading: reduxLoading, hasNextPage: reduxHasNextPage } = useSelector(state => state.activities || {});
 
+    const [extraItems, setExtraItems] = useState([]);
+    const [localHasNextPage, setLocalHasNextPage] = useState(null);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [showFallback, setShowFallback] = useState(false);
+
+    const allItems = [...reduxItems, ...extraItems];
+    const finalHasNextPage = localHasNextPage !== null ? localHasNextPage : reduxHasNextPage;
 
     const dummyActivities = [
         {
@@ -73,7 +80,7 @@ const AllActivity = () => {
             });
         };
 
-        if (items.length === 0) attemptFetch();
+        if (reduxItems.length === 0) attemptFetch();
 
         return () => {
             isMounted = false;
@@ -82,16 +89,26 @@ const AllActivity = () => {
         };
     }, [dispatch]);
 
-    const handleLoadMore = () => {
-        const lastId = items[items.length - 1]?._id;
+    const handleLoadMore = async () => {
+        const lastId = allItems[allItems.length - 1]?._id;
 
-        if (lastId && !loading) {
-            dispatch(fetchActivities(lastId))
-                .catch((err) => console.error("Pagination Error:", err));
+        if (lastId && !loadingMore) {
+            setLoadingMore(true);
+            try {
+                const response = await fetchActivitiesApi(lastId);
+                const fetchedItems = response.data?.activities || response.data || [];
+                
+                setExtraItems(prev => [...prev, ...fetchedItems]);
+                setLocalHasNextPage(response.data?.hasNextPage || false);
+            } catch (err) {
+                console.error("Pagination Error:", err);
+            } finally {
+                setLoadingMore(false);
+            }
         }
     };
 
-    const shouldShowToaster = items.length === 0 && showFallback;
+    const shouldShowToaster = reduxItems.length === 0 && showFallback;
 
     return (
         <div className="w-full">
@@ -101,12 +118,12 @@ const AllActivity = () => {
 
             <div>
                 <h2 className="text-[26px] font-[600] text-[#222222] tracking-tight mb-6 border-t border-[#EBEBEB] pt-12">
-                    {items.length > 0 ? "Trending Activities" : "Featured Activities"}
+                    {allItems.length > 0 ? "Trending Activities" : "Featured Activities"}
                 </h2>
 
-                {items.length > 0 ? (
+                {allItems.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
-                        {items.map(item => <ActivityCard key={item._id} data={item} />)}
+                        {allItems.map(item => <ActivityCard key={item._id} data={item} />)}
                     </div>
                 ) : showFallback ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 opacity-80">
@@ -119,14 +136,14 @@ const AllActivity = () => {
                     </div>
                 )}
 
-                {items.length > 0 && hasNextPage && (
+                {allItems.length > 0 && finalHasNextPage && (
                     <div className="mt-12 flex justify-center">
                         <button
-                            disabled={loading}
+                            disabled={loadingMore}
                             onClick={handleLoadMore}
                             className="px-6 py-3.5 bg-[#222222] text-white rounded-[10px] text-[15px] font-[600] transition-transform hover:bg-black active:scale-95 disabled:opacity-50"
                         >
-                            {loading ? "Loading..." : "Load More Activities"}
+                            {loadingMore ? "Loading..." : "Load More Activities"}
                         </button>
                     </div>
                 )}

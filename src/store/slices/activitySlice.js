@@ -37,13 +37,9 @@ const activitySlice = createSlice({
                 state.loading = false;
                 if (!action.meta.arg) {
                     state.items = action.payload.activities || action.payload.data || [];
-                } else {
-                    const payloadActivities = action.payload.activities || action.payload.data || [];
-                    const existingIds = new Set(state.items.map(i => i._id));
-                    const newItems = payloadActivities.filter(i => !existingIds.has(i._id));
-                    state.items = [...state.items, ...newItems];
+                    state.hasNextPage = action.payload.hasNextPage || false;
                 }
-                state.hasNextPage = action.payload.hasNextPage || false;
+                // We ignore paginated fetches in Redux to save RAM
             })
             .addCase(fetchActivities.rejected, (state, action) => {
                 state.loading = false;
