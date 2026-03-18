@@ -10,10 +10,17 @@ import SingleListing from './pages/SingleListing';
 import NotFound from './pages/NotFound';
 import CreateListing from './pages/CreateListing';
 import EditListing from './pages/EditListing';
+
+import SingleActivity from './pages/SingleActivity';
+import CreateActivity from './pages/CreateActivity';
+import EditActivity from './pages/EditActivity';
+
 import Toaster from './components/Toaster';
 
 import { fetchListings } from './store/slices/listingSlice';
 import { resetCreateState } from './store/slices/createListingSlice';
+import { fetchActivities } from './store/slices/activitySlice';
+import { resetCreateActivityState } from './store/slices/createActivitySlice';
 import ProfilePage from './pages/ProfilePage';
 
 const Layout = () => (
@@ -36,6 +43,11 @@ const router = createBrowserRouter([
       { path: "listing/:id", element: <SingleListing /> },
       { path: "createlisting", element: <CreateListing /> },
       { path: "edit-listing/:id", element: <EditListing /> },
+      
+      { path: "activity/:id", element: <SingleActivity /> },
+      { path: "createactivity", element: <CreateActivity /> },
+      { path: "edit-activity/:id", element: <EditActivity /> },
+      
       { path: "profile/:username", element: <ProfilePage /> },
     ],
   },
@@ -47,7 +59,8 @@ const router = createBrowserRouter([
 function App() {
   const dispatch = useDispatch();
   const { loading, token, user } = useSelector((state) => state.auth);
-  const { uploading, success } = useSelector(state => state.createListing);
+  const { uploading: listingUploading, success: listingSuccess } = useSelector(state => state.createListing);
+  const { uploading: activityUploading, success: activitySuccess } = useSelector(state => state.createActivity);
 
   useEffect(() => {
     if (token && !user) {
@@ -56,11 +69,15 @@ function App() {
   }, [dispatch, token, user]);
 
   useEffect(() => {
-    if (success) {
-      dispatch(fetchListings(1)); // Global fetch on success
-      dispatch(resetCreateState()); // Reset state
+    if (listingSuccess) {
+      dispatch(fetchListings(''));
+      dispatch(resetCreateState());
     }
-  }, [success, dispatch]);
+    if (activitySuccess) {
+      dispatch(fetchActivities(''));
+      dispatch(resetCreateActivityState());
+    }
+  }, [listingSuccess, activitySuccess, dispatch]);
 
   return (
     <>
@@ -70,7 +87,7 @@ function App() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
         </div>
       )}
-      {uploading && <Toaster message="Uploading your magic spot... 🚀" />}
+      {(listingUploading || activityUploading) && <Toaster message="Uploading your magic spot... 🚀" />}
 
       <RouterProvider router={router} />
     </>

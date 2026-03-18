@@ -36,8 +36,8 @@ const PostCard = ({ id, title, label, images }) => {
                     {title}
                 </h4>
                 <div className="mt-2 flex items-center text-slate-500 text-sm">
-                    {/* You can add more info here like price or location later */}
-                    <Link className="text-xs" to={`/listing/${id}`}>
+                    {/* Dynamic route based on label */}
+                    <Link className="text-xs" to={`/${label.toLowerCase()}/${id}`}>
                         View Details →
                     </Link>
                 </div>
