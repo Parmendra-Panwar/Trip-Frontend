@@ -1,40 +1,43 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchListings, resetPagination } from '../store/slices/listingSlice';
+import { fetchListings } from '../store/slices/listingSlice';
 import ListingCard from '../components/ListingCard';
 import Toaster from '../components/Toaster';
 
 const AllListing = () => {
     const dispatch = useDispatch();
-    const { items = [], loading, pagination } = useSelector(state => state.listings || {});
 
+    // Redux selectors
+    const { items = [], loading, hasNextPage } = useSelector(state => state.listings || {});
+
+    // Local states
     const [localListings, setLocalListings] = useState([]);
-    const [showFallback, setShowFallback] = useState(false); // 2 sec baad true hoga
+    const [showFallback, setShowFallback] = useState(false);
 
     const dummyListings = [
         {
-            id: 1,
+            _id: "dummy1",
             title: "Manali Wooden Cottage",
             price: 2500,
             location: "Himachal",
             images: [{ url: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=60" }]
         },
         {
-            id: 2,
+            _id: "dummy2",
             title: "Goa Beach Villa",
             price: 5000,
             location: "North Goa",
             images: [{ url: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=60" }]
         },
         {
-            id: 3,
+            _id: "dummy3",
             title: "Jaipur Heritage Stay",
             price: 3200,
             location: "Rajasthan",
             images: [{ url: "https://images.unsplash.com/photo-1590050752117-23a9d7fc9ba1?auto=format&fit=crop&w=800&q=60" }]
         },
         {
-            id: 4,
+            _id: "dummy4",
             title: "Kerala Backwaters House",
             price: 4500,
             location: "Alleppey",
@@ -42,21 +45,23 @@ const AllListing = () => {
         },
     ];
 
+    // 1. Initial Fetch and Fallback Timer
     useEffect(() => {
         let isMounted = true;
-        let interval;
+        let retryInterval;
 
-        // Start 2-second timer for fallback
         const fallbackTimer = setTimeout(() => {
             if (isMounted) setShowFallback(true);
         }, 2000);
 
         const attemptFetch = () => {
             if (!isMounted) return;
-            dispatch(fetchListings(1)).then((result) => {
+
+            dispatch(fetchListings('')).then((result) => {
                 if (!isMounted) return;
+                // Agar request reject hui, toh 5 sec baad retry karo
                 if (result.meta.requestStatus === 'rejected') {
-                    interval = setTimeout(attemptFetch, 5000);
+                    retryInterval = setTimeout(attemptFetch, 5000);
                 }
             });
         };
@@ -65,68 +70,80 @@ const AllListing = () => {
 
         return () => {
             isMounted = false;
-            clearTimeout(interval);
-            clearTimeout(fallbackTimer); // Cleanup timer
-            dispatch(resetPagination());
+            clearTimeout(retryInterval);
+            clearTimeout(fallbackTimer);
         };
     }, [dispatch]);
 
+    // 2. Sync Redux items with Local State (First load only)
     useEffect(() => {
-        // Agar page 1 ka data (new load ya background refresh) aaya hai, toh reset kardo
-        if (pagination.currentPage === 1 && items.length > 0) {
+        if (items.length > 0 && localListings.length === 0) {
             setLocalListings(items);
         }
-    }, [items, pagination.currentPage]);
+    }, [items]);
 
+    // 3. Load More logic (Cursor-based)
     const handleLoadMore = () => {
-        if (pagination.currentPage < pagination.totalPages) {
-            dispatch(fetchListings(pagination.currentPage + 1))
+        const lastId = localListings[localListings.length - 1]?._id;
+
+        if (lastId && !loading) {
+            dispatch(fetchListings(lastId))
                 .unwrap()
-                .then((payload) => setLocalListings(prev => [...prev, ...payload.listings]))
-                .catch((err) => console.error(err));
+                .then((payload) => {
+                    // Append only to local state to save Redux RAM
+                    setLocalListings(prev => [...prev, ...payload.listings]);
+                })
+                .catch((err) => console.error("Pagination Error:", err));
         }
     };
 
-    // UI State Logic
-    const isFetchingInitialData = loading && localListings.length === 0
+    /**
+     * TOASTER LOGIC FIX:
+     * Hum loading state ko condition se hata rahe hain. 
+     * Jab tak localListings khali hain aur 2 sec beet chuke hain, 
+     * tab tak toaster permanent dikhega (chahe loading true ho ya retry wait mein false).
+     */
+    const shouldShowToaster = localListings.length === 0 && showFallback;
 
     return (
         <div className="space-y-8 pb-10">
-            {/* Show Toaster only after 2 seconds AND if backend is still loading */}
-            {isFetchingInitialData && showFallback && (
+            {/* Permanent Toaster during fallback state */}
+            {shouldShowToaster && (
                 <Toaster message="Backend is waking up, showing preview..." />
             )}
 
-            {/* Grid Section */}
             <div>
                 <h2 className="text-2xl font-bold text-slate-800 mb-6">
                     {localListings.length > 0 ? "Trending Destinations" : "Featured Preview"}
                 </h2>
 
-                {/* LOGIC: 
-                    1. Agar data hai, toh data dikhao.
-                    2. Agar data nahi hai aur 2 sec beet gaye, toh dummy dikhao.
-                    3. Agar 2 sec se kam hue hain, toh bada spinner dikhao.
-                */}
+                {/* Grid logic: Real Data -> Dummy Data -> Spinner */}
                 {localListings.length > 0 ? (
+                    // 1. Real data from backend
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {localListings.map(item => <ListingCard key={item._id} data={item} />)}
                     </div>
                 ) : showFallback ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {dummyListings.map(item => <ListingCard key={item.id} data={item} />)}
+                    // 2. Server taking time/failed: show Dummy
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 opacity-70">
+                        {dummyListings.map(item => <ListingCard key={item._id} data={item} />)}
                     </div>
                 ) : (
+                    // 3. Initial 2 seconds: show Spinner
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-slate-500 font-medium">Fetching best deals for you...</p>
+                        <p className="text-slate-500 font-medium">Finding the best stays for you...</p>
                     </div>
                 )}
 
-                {/* Load More */}
-                {localListings.length > 0 && pagination?.currentPage < pagination?.totalPages && (
+                {/* Load More Button */}
+                {localListings.length > 0 && hasNextPage && (
                     <div className="mt-12 flex justify-center">
-                        <button disabled={loading} onClick={handleLoadMore} className="px-8 py-3 bg-slate-900 text-white rounded-full font-bold shadow-lg">
+                        <button
+                            disabled={loading}
+                            onClick={handleLoadMore}
+                            className="px-8 py-3 bg-slate-900 text-white rounded-full font-bold shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                        >
                             {loading ? "Loading..." : "Load More Destinations"}
                         </button>
                     </div>

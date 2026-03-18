@@ -65,6 +65,7 @@ const authSlice = createSlice({
             .addCase(getProfile.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.user;
+                localStorage.setItem('user', JSON.stringify(action.payload.user));
             })
             // 2. Generic Matchers (Bina variables ke string pattern use karo)
             .addMatcher(

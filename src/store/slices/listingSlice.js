@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { fetchListingsApi } from '../../services/listingService';
 
-export const fetchListings = createAsyncThunk('listings/fetchAll', async (page = 1, { rejectWithValue }) => {
+export const fetchListings = createAsyncThunk('listings/fetchAll', async (lastId = '', { rejectWithValue }) => {
     try {
-        const response = await fetchListingsApi(page);
+        const response = await fetchListingsApi(lastId);
         return response.data;
     } catch (err) {
         return rejectWithValue("Backend is offline");
@@ -14,41 +14,26 @@ const listingSlice = createSlice({
     name: 'listings',
     initialState: {
         items: [],
-        pagination: {
-            currentPage: 1,
-            totalPages: 1
-        },
+        hasNextPage: false,
         loading: false,
         error: null,
     },
-    reducers: {
-        resetPagination: (state) => {
-            state.pagination.currentPage = 1;
-        }
-    },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchListings.pending, (state) => {
-                state.loading = true;
-            })
+            .addCase(fetchListings.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchListings.fulfilled, (state, action) => {
                 state.loading = false;
-
-                // save only first load data to reduce the redux ram  
-                if (action.payload.currentPage === 1) {
+                // RAM Optimization: Sirf pehli baar data Redux mein save karo
+                if (!action.meta.arg) {
                     state.items = action.payload.listings;
                 }
-
-                // Pagination state update
-                state.pagination.currentPage = action.payload.currentPage;
-                state.pagination.totalPages = action.payload.totalPages;
+                state.hasNextPage = action.payload.hasNextPage;
             })
             .addCase(fetchListings.rejected, (state, action) => {
-                // state.loading = false;
+                state.loading = false;
                 state.error = action.payload;
             });
     }
 });
 
-export const { resetPagination } = listingSlice.actions;
 export default listingSlice.reducer;

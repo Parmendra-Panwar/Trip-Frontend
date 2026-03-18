@@ -21,6 +21,7 @@ const profileSlice = createSlice({
         posts: { trips: [], activities: [], listings: [] },
         pagination: { currentPage: 1 },
         loading: false,
+        hasNext: { trips: false, activities: false, listings: false },
     },
     reducers: {},
     extraReducers: (builder) => {
@@ -36,6 +37,8 @@ const profileSlice = createSlice({
                     state.posts.trips = action.payload.trips;
                     state.posts.activities = action.payload.activities;
                     state.posts.listings = action.payload.listings;
+
+                    state.hasNext = action.payload.hasNext;
                 }
                 state.pagination.currentPage = action.payload.currentPage;
             });
