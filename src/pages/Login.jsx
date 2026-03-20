@@ -57,7 +57,7 @@ const Login = () => {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all disabled:opacity-50"
+                    className="w-full bg-[#FF385C] text-white py-3 rounded-lg font-semibold hover:bg-[#D90B38] transition-all disabled:opacity-50"
                 >
                     {loading ? "Verifying..." : "Login"}
                 </button>

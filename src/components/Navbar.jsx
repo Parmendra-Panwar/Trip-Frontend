@@ -93,7 +93,7 @@ const Navbar = () => {
                                 {showMenu && (
                                     <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 py-2 z-50 overflow-hidden">
                                         <div className="px-4 py-2 border-b border-gray-50 mb-1">
-                                            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Actions</p>
+                                            <button onClick={() => navigate(`/profile/${user.username}`)} className="cursor-pointer w-full text-left py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Profile</button>
                                         </div>
 
                                         {isBusiness && (

@@ -25,8 +25,9 @@ const EditActivity = () => {
         difficulty: 'Easy',
         tags: ''
     });
-    
-    const [images, setImages] = useState([]);
+
+    const [existingImages, setExistingImages] = useState([]);
+    const [newImages, setNewImages] = useState([]);
     const [previews, setPreviews] = useState([]);
 
     useEffect(() => {
@@ -40,7 +41,7 @@ const EditActivity = () => {
                 const response = await fetchActivityById(id);
                 // The exact shape depends on backend, but let's assume response.data.activity based on listing
                 const activity = response.data.activity || response.data;
-                
+
                 // Only owner can edit
                 if (activity.user?._id !== user?._id && activity.user?.username !== user?.username && activity.user !== user?._id) {
                     navigate('/'); // or somewhere else
@@ -58,6 +59,7 @@ const EditActivity = () => {
                 });
 
                 if (activity.images && activity.images.length > 0) {
+                    setExistingImages(activity.images);
                     setPreviews(activity.images.map(img => img.url));
                 }
             } catch (err) {
@@ -79,17 +81,42 @@ const EditActivity = () => {
     }, [previews]);
 
     const handleImageChange = (e) => {
-        const files = Array.from(e.target.files).slice(0, 7);
-        setImages(files);
-        const filePreviews = files.map(file => URL.createObjectURL(file));
-        setPreviews(filePreviews);
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        const totalAllowed = 7 - existingImages.length;
+        if (totalAllowed <= 0) return;
+
+        const addedFiles = files.slice(0, totalAllowed);
+        const updatedNewImages = [...newImages, ...addedFiles].slice(0, 7 - existingImages.length);
+        setNewImages(updatedNewImages);
+
+        const localPreviews = updatedNewImages.map(file => URL.createObjectURL(file));
+        setPreviews([...existingImages.map(img => img.url), ...localPreviews]);
+
+        e.target.value = '';
+    };
+
+    const removeImage = (indexToRemove) => {
+        if (indexToRemove < existingImages.length) {
+            const updatedExisting = existingImages.filter((_, i) => i !== indexToRemove);
+            setExistingImages(updatedExisting);
+            const localPreviews = newImages.map(file => URL.createObjectURL(file));
+            setPreviews([...updatedExisting.map(img => img.url), ...localPreviews]);
+        } else {
+            const newIndex = indexToRemove - existingImages.length;
+            const updatedNew = newImages.filter((_, i) => i !== newIndex);
+            setNewImages(updatedNew);
+            const localPreviews = updatedNew.map(file => URL.createObjectURL(file));
+            setPreviews([...existingImages.map(img => img.url), ...localPreviews]);
+        }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         setUploading(true);
         setError(null);
-        
+
         // 1. Prepare data
         const data = new FormData();
         const tagsArray = formData.tags
@@ -103,7 +130,9 @@ const EditActivity = () => {
         });
 
         tagsArray.forEach(tag => data.append('activity[tags][]', tag));
-        images.forEach(img => {
+
+        data.append('remainingImages', JSON.stringify(existingImages));
+        newImages.forEach(img => {
             data.append('images', img);
         });
 
@@ -229,15 +258,41 @@ const EditActivity = () => {
                     </div>
 
                     {/* Image Upload Area */}
-                    <div className="border-2 border-dashed border-slate-200 p-8 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-rose-300 transition group relative">
-                        <input type="file" multiple accept="image/*" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                        <svg className="w-10 h-10 text-slate-400 group-hover:text-rose-500 transition mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        <p className="font-medium text-slate-700 group-hover:text-rose-600 transition">Drag & drop or click to replace images</p>
-                        <p className="text-xs text-slate-400 mt-1">Leave empty to keep existing images</p>
+                    <div>
+                        <div className="border-2 border-dashed border-slate-200 p-8 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-rose-300 transition group relative">
+                            <input type="file" multiple accept="image/*" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                            <svg className="w-10 h-10 text-slate-400 group-hover:text-rose-500 transition mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <p className="font-medium text-slate-700 group-hover:text-rose-600 transition">Drag & drop or click to replace images</p>
+                            <p className="text-xs text-slate-400 mt-1">Leave empty to keep existing images</p>
+                        </div>
+
+                        {/* Selected Images Grid */}
+                        {previews.length > 0 && (
+                            <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                {previews.map((preview, index) => (
+                                    <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 shadow-sm">
+                                        <img src={preview} className="w-full h-full object-cover" alt={`Preview ${index + 1}`} />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeImage(index)}
+                                            className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 scale-90 hover:scale-100"
+                                            title="Remove image"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                        {index === 0 && (
+                                            <span className="absolute bottom-2 left-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                                                Cover
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-rose-600 hover:shadow-lg transition-all duration-300 disabled:opacity-50">
-                        {uploading ? 'Processing...' : 'Save Edits (Background)'}
+                        {uploading ? 'Processing...' : 'Save Edits'}
                     </button>
                 </form>
             </div>

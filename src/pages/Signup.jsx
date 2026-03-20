@@ -51,14 +51,14 @@ const Signup = () => {
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
 
-                <button disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all disabled:opacity-50">
+                <button disabled={loading} className="w-full bg-[#FF385C] text-white py-3 rounded-lg font-semibold hover:bg-[#D90B38] transition-all disabled:opacity-50">
                     {loading ? "Creating..." : "Sign Up"}
                 </button>
 
                 {error && <p className="text-red-500 mt-4 text-center text-sm">{error}</p>}
 
                 <p className="mt-4 text-center text-slate-600 text-sm">
-                    Already have an account? <Link title="Login" to="/login" className="text-blue-600 font-bold">Login</Link>
+                    Already have an account? <Link title="Login" to="/login" className="text-[#FF385C] font-bold">Login</Link>
                 </p>
             </form>
         </div>

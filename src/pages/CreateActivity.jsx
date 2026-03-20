@@ -27,14 +27,20 @@ const CreateActivity = () => {
     }, [user, navigate]);
 
     useEffect(() => {
-        return () => previews.forEach(url => URL.revokeObjectURL(url));
-    }, [previews]);
+        const objectUrls = images.map(file => URL.createObjectURL(file));
+        setPreviews(objectUrls);
+        return () => objectUrls.forEach(url => URL.revokeObjectURL(url));
+    }, [images]);
 
     const handleImageChange = (e) => {
-        const files = Array.from(e.target.files).slice(0, 7);
-        setImages(files);
-        const filePreviews = files.map(file => URL.createObjectURL(file));
-        setPreviews(filePreviews);
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        setImages(prev => [...prev, ...files].slice(0, 7));
+        e.target.value = '';
+    };
+
+    const removeImage = (indexToRemove) => {
+        setImages(prev => prev.filter((_, i) => i !== indexToRemove));
     };
 
     // CreateListing.jsx mein is function ko replace karein
@@ -160,11 +166,37 @@ const CreateActivity = () => {
                     </div>
 
                     {/* Image Upload Area */}
-                    <div className="border-2 border-dashed border-slate-200 p-8 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-rose-300 transition group relative">
-                        <input type="file" multiple accept="image/*" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required />
-                        <svg className="w-10 h-10 text-slate-400 group-hover:text-rose-500 transition mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        <p className="font-medium text-slate-700 group-hover:text-rose-600 transition">Drag & drop or click to upload</p>
-                        <p className="text-xs text-slate-400 mt-1">Up to 7 images</p>
+                    <div>
+                        <div className="border-2 border-dashed border-slate-200 p-8 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-rose-300 transition group relative">
+                            <input type="file" multiple accept="image/*" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required={images.length === 0} />
+                            <svg className="w-10 h-10 text-slate-400 group-hover:text-rose-500 transition mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <p className="font-medium text-slate-700 group-hover:text-rose-600 transition">Drag & drop or click to upload</p>
+                            <p className="text-xs text-slate-400 mt-1">Up to 7 images</p>
+                        </div>
+
+                        {/* Selected Images Grid */}
+                        {previews.length > 0 && (
+                            <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                {previews.map((preview, index) => (
+                                    <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 shadow-sm">
+                                        <img src={preview} className="w-full h-full object-cover" alt={`Preview ${index + 1}`} />
+                                        <button 
+                                            type="button"
+                                            onClick={() => removeImage(index)}
+                                            className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 scale-90 hover:scale-100"
+                                            title="Remove image"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                        {index === 0 && (
+                                            <span className="absolute bottom-2 left-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                                                Cover
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <button type="submit" disabled={uploading} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-rose-600 hover:shadow-lg transition-all duration-300 disabled:opacity-50">
