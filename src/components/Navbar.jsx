@@ -56,15 +56,9 @@ const Navbar = () => {
 
                             {/* Desktop Quick Links */}
                             <div className="hidden md:flex items-center gap-6 pr-2">
-                                {isBusiness && (
-                                    <>
-                                        <Link to="/listings" className={linkStyle('/listings') + " cursor-pointer"}>Explore Properties</Link>
-                                        <Link to="/activities" className={linkStyle('/activities') + " cursor-pointer"}>Trending Activities</Link>
-                                    </>
-                                )}
-                                {isNormal && (
-                                    <Link to="/trips" className={linkStyle('/trips') + " cursor-pointer"}>Trip Experiences</Link>
-                                )}
+                                <Link to="/listings" className={linkStyle('/listings') + " cursor-pointer"}>Explore Properties</Link>
+                                <Link to="/activities" className={linkStyle('/activities') + " cursor-pointer"}>Trending Activities</Link>
+                                <Link to="/trips" className={linkStyle('/trips') + " cursor-pointer"}>Trip Experiences</Link>
                             </div>
 
                             {/* Airbnb-style Profile Pill with Modal */}

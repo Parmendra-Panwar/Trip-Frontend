@@ -3,6 +3,7 @@ import axios from 'axios';
 // 1. Axios Instance Setup
 const api = axios.create({
     baseURL: 'http://localhost:8080/api/v1', // Aapne backend mein jo prefix rakha ho
+    // https://triplinkerbackend.onrender.com
     headers: {
         'Content-Type': 'application/json'
     }

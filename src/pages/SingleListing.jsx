@@ -3,10 +3,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { deleteListingApi, fetchListingById } from '../services/listingService';
 import { removeListing } from '../store/slices/listingSlice';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 
 import ImageModal from '../components/ImageModal';
 import ReviewSection from '../components/ReviewSection';
+import MapSection from '../components/MapSection';
+import ReserveBook from '../components/ReserveBook';
+import ImageGallery from '../components/ImageGallery';
+import NearbySection from '../components/NearbySection';
 
 const SingleListing = () => {
     const { id } = useParams();
@@ -53,7 +56,7 @@ const SingleListing = () => {
             setLoading(true);
             // 1. Navigate immediately so user doesn't wait
             navigate('/');
-            
+
             // 2. Perform delete in background
             deleteListingApi(id)
                 .then(() => {
@@ -76,6 +79,8 @@ const SingleListing = () => {
     const data = listing?.listing;
     const isOwner = currentUser && data?.user && currentUser.username === data.user.username;
     const displayTags = data?.tags?.length > 0 ? data.tags : ["wifi", "pool", "budget"];
+    const nearbyActivities = listing?.nearbyActivities;
+    const nearbyListings = listing?.nearbyListings;
 
     const lat = listing?.latitude || 20.5937;
     const lng = listing?.longitude || 78.9629;
@@ -127,19 +132,7 @@ const SingleListing = () => {
                 </div>
 
                 {/* 2. Image Gallery */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded-[2rem] overflow-hidden h-[300px] md:h-[500px] mb-12 relative z-0">
-                    <div className="h-full cursor-pointer group" onClick={() => openModal(0)}>
-                        <img src={data?.images[0]?.url} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Main" />
-                    </div>
-                    <div className="hidden md:grid grid-rows-2 gap-3 h-full">
-                        <div className="cursor-pointer overflow-hidden group" onClick={() => openModal(1)}>
-                            <img src={data?.images[1]?.url || data?.images[0]?.url} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Secondary 1" />
-                        </div>
-                        <div className="cursor-pointer overflow-hidden group" onClick={() => openModal(2)}>
-                            <img src={data?.images[2]?.url || data?.images[0]?.url} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Secondary 2" />
-                        </div>
-                    </div>
-                </div>
+                <ImageGallery images={data?.images} openModal={openModal} />
 
                 {/* 3. Main Content */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 relative z-0">
@@ -172,40 +165,23 @@ const SingleListing = () => {
                         </div>
                     </div>
 
-                    <div className="relative">
-                        <div className="sticky top-28 p-8 border border-slate-200 rounded-3xl shadow-lg bg-white z-10">
-                            <div className="flex items-end gap-1 mb-6">
-                                <span className="text-3xl font-black text-slate-900">₹{data?.price.toLocaleString('en-IN')}</span>
-                                <span className="text-base text-slate-500 font-medium mb-1">/ night</span>
-                            </div>
-                            <button className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-xl font-bold text-lg shadow-md transition-all active:scale-95">
-                                Reserve Now
-                            </button>
-                            <div className="flex justify-center mt-4">
-                                <span className="text-sm font-medium text-slate-400">You won't be charged yet</span>
-                            </div>
-                        </div>
-                    </div>
+                    <ReserveBook price={data?.price} buttonText="Reserve Now" />
                 </div>
 
                 {/* 4. Map Section */}
-                {/* Note: MapContainer z-index must be lower than Modal and Dropdown */}
-                <div className="mt-16 pt-10 border-t border-slate-200 relative z-0">
-                    <h3 className="text-2xl font-bold text-slate-900 mb-6">Where you'll be</h3>
-                    <div className="h-[450px] w-full rounded-3xl overflow-hidden shadow-inner border border-slate-200">
-                        {/* Adding a relative wrapper with explicit low z-index for Leaflet */}
-                        <div className="relative w-full h-full z-0">
-                            <MapContainer center={[lat, lng]} zoom={13} scrollWheelZoom={false} className="h-full w-full relative z-0">
-                                <TileLayer
-                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                />
-                                <Marker position={[lat, lng]}></Marker>
-                            </MapContainer>
-                        </div>
-                    </div>
-                    <p className="mt-4 text-slate-600 font-medium">{data?.location}, {data?.country}</p>
-                </div>
+                <MapSection lat={lat} lng={lng} location={data?.location} country={data?.country} />
+
+                <NearbySection
+                    title="Things to do nearby"
+                    data={nearbyActivities}
+                    type="activity"
+                />
+
+                <NearbySection
+                    title="Similar stays nearby"
+                    data={nearbyListings}
+                    type="listing"
+                />
             </div>
         </div>
     );
