@@ -1,6 +1,6 @@
-import api from './authService';
+import api from './authServicee';
 
-export const fetchListingsApi = (page = 1) => api.get(`/listings?page=${page}&limit=12`);
+export const fetchListingsApi = (lastId = '', limit = 12) => api.get(`/listings?lastId=${lastId}&limit=${limit}`);
 
 export const fetchListingById = (id) => api.get(`/listings/${id}`);
 
@@ -12,3 +12,13 @@ export const createListingApi = (formData) => {
         },
     });
 };
+
+export const updateListingApi = (id, formData) => {
+    return api.put(`/listings/${id}`, formData, {
+        headers: {
+            'Content-Type': undefined,
+        },
+    });
+};
+
+export const deleteListingApi = (id) => api.delete(`/listings/${id}`)

@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchListings } from '../store/slices/listingSlice';
-import { fetchListingsApi } from '../services/listingService';
-import ListingCard from '../components/ListingCard';
+import { fetchActivities } from '../store/slices/activitySlice';
+import { fetchActivitiesApi } from '../services/activityService';
+import ActivityCard from '../components/ActivityCard';
 import Toaster from '../components/Toaster';
 
-const AllListing = () => {
+const AllActivity = () => {
     const dispatch = useDispatch();
 
-    // Redux selectors (Only stores the first 12 items)
-    const { items: reduxItems = [], loading: reduxLoading, hasNextPage: reduxHasNextPage } = useSelector(state => state.listings || {});
+    const { items: reduxItems = [], loading: reduxLoading, hasNextPage: reduxHasNextPage } = useSelector(state => state.activities || {});
 
-    // Local states for pagination and fallbacks
     const [extraItems, setExtraItems] = useState([]);
     const [localHasNextPage, setLocalHasNextPage] = useState(null);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -20,38 +18,49 @@ const AllListing = () => {
     const allItems = [...reduxItems, ...extraItems];
     const finalHasNextPage = localHasNextPage !== null ? localHasNextPage : reduxHasNextPage;
 
-    const dummyListings = [
+    const dummyActivities = [
         {
             _id: "dummy1",
-            title: "Manali Wooden Cottage",
-            price: 2500,
+            title: "Himalayan Trekking",
+            price: 5500,
             location: "Himachal",
-            images: [{ url: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=60" }]
+            country: "India",
+            duration: "3 days",
+            difficulty: "Hard",
+            images: [{ url: "https://images.unsplash.com/photo-1551632811-561f32a74c0c?auto=format&fit=crop&w=800&q=60" }]
         },
         {
             _id: "dummy2",
-            title: "Goa Beach Villa",
-            price: 5000,
-            location: "North Goa",
-            images: [{ url: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=60" }]
+            title: "Scuba Diving in Andaman",
+            price: 8000,
+            location: "Andaman",
+            country: "India",
+            duration: "4 hours",
+            difficulty: "Moderate",
+            images: [{ url: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=60" }]
         },
         {
             _id: "dummy3",
-            title: "Jaipur Heritage Stay",
+            title: "Desert Safari",
             price: 3200,
             location: "Rajasthan",
-            images: [{ url: "https://images.unsplash.com/photo-1590050752117-23a9d7fc9ba1?auto=format&fit=crop&w=800&q=60" }]
+            country: "India",
+            duration: "6 hours",
+            difficulty: "Easy",
+            images: [{ url: "https://images.unsplash.com/photo-1536411986927-5c5fbaab6aeb?auto=format&fit=crop&w=800&q=60" }]
         },
         {
             _id: "dummy4",
-            title: "Kerala Backwaters House",
-            price: 4500,
-            location: "Alleppey",
-            images: [{ url: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=800&q=60" }]
+            title: "River Rafting",
+            price: 1500,
+            location: "Rishikesh",
+            country: "India",
+            duration: "2 hours",
+            difficulty: "High-Risk",
+            images: [{ url: "https://images.unsplash.com/photo-1534149957077-03b070440268?auto=format&fit=crop&w=800&q=60" }]
         },
     ];
 
-    // 1. Initial Fetch and Fallback Timer
     useEffect(() => {
         let isMounted = true;
         let retryInterval;
@@ -63,8 +72,7 @@ const AllListing = () => {
         const attemptFetch = () => {
             if (!isMounted) return;
 
-            // Fetch only the first page via Redux
-            dispatch(fetchListings('')).then((result) => {
+            dispatch(fetchActivities('')).then((result) => {
                 if (!isMounted) return;
                 if (result.meta?.requestStatus === 'rejected') {
                     retryInterval = setTimeout(attemptFetch, 5000);
@@ -81,17 +89,15 @@ const AllListing = () => {
         };
     }, [dispatch]);
 
-    // 2. Load More logic (Stored strictly in RAM locally, not Redux)
     const handleLoadMore = async () => {
         const lastId = allItems[allItems.length - 1]?._id;
 
         if (lastId && !loadingMore) {
             setLoadingMore(true);
             try {
-                const response = await fetchListingsApi(lastId);
-                const fetchedItems = response.data?.listings || response.data || [];
+                const response = await fetchActivitiesApi(lastId);
+                const fetchedItems = response.data?.activities || response.data || [];
                 
-                // Keep RAM efficient: Append to local memory only
                 setExtraItems(prev => [...prev, ...fetchedItems]);
                 setLocalHasNextPage(response.data?.hasNextPage || false);
             } catch (err) {
@@ -111,27 +117,25 @@ const AllListing = () => {
             )}
 
             <div>
-                <h2 className="text-[26px] font-[600] text-[#222222] tracking-tight mb-6 mt-6">
-                    {allItems.length > 0 ? "Trending Destinations" : "Featured Preview"}
+                <h2 className="text-[26px] font-[600] text-[#222222] tracking-tight mb-6 border-t border-[#EBEBEB] pt-12">
+                    {allItems.length > 0 ? "Trending Activities" : "Featured Activities"}
                 </h2>
 
-                {/* Grid logic: Real Data -> Dummy Data -> Spinner */}
                 {allItems.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
-                        {allItems.map(item => <ListingCard key={item._id} data={item} />)}
+                        {allItems.map(item => <ActivityCard key={item._id} data={item} />)}
                     </div>
                 ) : showFallback ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 opacity-80">
-                        {dummyListings.map(item => <ListingCard key={item._id} data={item} />)}
+                        {dummyActivities.map(item => <ActivityCard key={item._id} data={item} />)}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-[100px] bg-[#F7F7F7] rounded-[1.5rem] my-4">
                         <div className="w-[40px] h-[40px] border-[3px] border-[#EBEBEB] border-t-[#222222] rounded-full animate-spin mb-6"></div>
-                        <p className="text-[#222222] font-[500] text-[15px] tracking-tight">Finding the best stays for you...</p>
+                        <p className="text-[#222222] font-[500] text-[15px] tracking-tight">Finding the best activities for you...</p>
                     </div>
                 )}
 
-                {/* Load More Button */}
                 {allItems.length > 0 && finalHasNextPage && (
                     <div className="mt-12 flex justify-center">
                         <button
@@ -139,7 +143,7 @@ const AllListing = () => {
                             onClick={handleLoadMore}
                             className="px-6 py-3.5 bg-[#222222] text-white rounded-[10px] text-[15px] font-[600] transition-transform hover:bg-black active:scale-95 disabled:opacity-50"
                         >
-                            {loadingMore ? "Loading..." : "Load More Destinations"}
+                            {loadingMore ? "Loading..." : "Load More Activities"}
                         </button>
                     </div>
                 )}
@@ -148,4 +152,4 @@ const AllListing = () => {
     );
 };
 
-export default AllListing;
+export default AllActivity;

@@ -3,7 +3,7 @@ const ProfileHeader = ({ userData, stats, onEdit, onSettings }) => {
         <header className="p-8 border-b border-slate-100 flex flex-col md:flex-row gap-8 items-center md:items-start bg-white">
             <div className="flex-shrink-0">
                 <img
-                    src="https://via.placeholder.com/150"
+                    src="https://pfpmaker.com/content/img/profile-pictures/aesthetic/2.png"
                     alt={userData.username}
                     className="w-32 h-32 rounded-full object-cover border-4 border-slate-50 shadow-sm"
                 />

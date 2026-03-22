@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { submitNewListing } from '../store/slices/createListingSlice';
+import { useNavigate, useParams } from 'react-router-dom';
+import { fetchActivityById, updateActivityApi } from '../services/activityService';
+import { updateActivityLocally } from '../store/slices/activitySlice';
+import Toaster from '../components/Toaster';
 
-
-const CreateListing = () => {
+const EditActivity = () => {
+    const { id } = useParams();
     const { user } = useSelector(state => state.auth);
-    const { uploading, error } = useSelector(state => state.createListing);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+
+    const [uploading, setUploading] = useState(false);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -16,73 +21,150 @@ const CreateListing = () => {
         price: '',
         location: '',
         country: '',
-        category: 'Homestays & Guesthouses',
-        tags: '' // Backend ko array chahiye, hum handleSumbit mein format karenge
+        duration: '',
+        difficulty: 'Easy',
+        tags: ''
     });
-    const [images, setImages] = useState([]);
+
+    const [existingImages, setExistingImages] = useState([]);
+    const [newImages, setNewImages] = useState([]);
     const [previews, setPreviews] = useState([]);
 
     useEffect(() => {
-        if (!user) navigate('/login');
-    }, [user, navigate]);
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        const fetchActivity = async () => {
+            try {
+                const response = await fetchActivityById(id);
+                // The exact shape depends on backend, but let's assume response.data.activity based on listing
+                const activity = response.data.activity || response.data;
+
+                // Only owner can edit
+                if (activity.user?._id !== user?._id && activity.user?.username !== user?.username && activity.user !== user?._id) {
+                    navigate('/'); // or somewhere else
+                }
+
+                setFormData({
+                    title: activity.title || '',
+                    description: activity.description || '',
+                    price: activity.price || '',
+                    location: activity.location || '',
+                    country: activity.country || '',
+                    duration: activity.duration || '',
+                    difficulty: activity.difficulty || 'Easy',
+                    tags: activity.tags ? activity.tags.join(', ') : ''
+                });
+
+                if (activity.images && activity.images.length > 0) {
+                    setExistingImages(activity.images);
+                    setPreviews(activity.images.map(img => img.url));
+                }
+            } catch (err) {
+                setError(err.message || "Failed to load activity");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchActivity();
+    }, [id, user, navigate]);
 
     useEffect(() => {
-        const objectUrls = images.map(file => URL.createObjectURL(file));
-        setPreviews(objectUrls);
-        return () => objectUrls.forEach(url => URL.revokeObjectURL(url));
-    }, [images]);
+        return () => {
+            previews.forEach(url => {
+                if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+            });
+        };
+    }, [previews]);
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
-        setImages(prev => [...prev, ...files].slice(0, 7));
+
+        const totalAllowed = 7 - existingImages.length;
+        if (totalAllowed <= 0) return;
+
+        const addedFiles = files.slice(0, totalAllowed);
+        const updatedNewImages = [...newImages, ...addedFiles].slice(0, 7 - existingImages.length);
+        setNewImages(updatedNewImages);
+
+        const localPreviews = updatedNewImages.map(file => URL.createObjectURL(file));
+        setPreviews([...existingImages.map(img => img.url), ...localPreviews]);
+
         e.target.value = '';
     };
 
     const removeImage = (indexToRemove) => {
-        setImages(prev => prev.filter((_, i) => i !== indexToRemove));
+        if (indexToRemove < existingImages.length) {
+            const updatedExisting = existingImages.filter((_, i) => i !== indexToRemove);
+            setExistingImages(updatedExisting);
+            const localPreviews = newImages.map(file => URL.createObjectURL(file));
+            setPreviews([...updatedExisting.map(img => img.url), ...localPreviews]);
+        } else {
+            const newIndex = indexToRemove - existingImages.length;
+            const updatedNew = newImages.filter((_, i) => i !== newIndex);
+            setNewImages(updatedNew);
+            const localPreviews = updatedNew.map(file => URL.createObjectURL(file));
+            setPreviews([...existingImages.map(img => img.url), ...localPreviews]);
+        }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        const data = new FormData();
+        setUploading(true);
+        setError(null);
 
-        // 1. Tags Handling
+        // 1. Prepare data
+        const data = new FormData();
         const tagsArray = formData.tags
             ? formData.tags.split(',').map(tag => tag.trim().toLowerCase())
-            : ["wifi", "pool", "budget"];
+            : ["rafting", "trekking", "camping"];
 
-        // 2. Listing object fields append
         Object.keys(formData).forEach(key => {
             if (key !== 'tags') {
-                // Backend middleware expects req.body.listing.title etc.
-                data.append(`listing[${key}]`, formData[key]);
+                data.append(`activity[${key}]`, formData[key]);
             }
         });
 
-        // Tags array ko listing ke andar append karein
-        tagsArray.forEach(tag => data.append('listing[tags][]', tag));
+        tagsArray.forEach(tag => data.append('activity[tags][]', tag));
 
-        // 3. Images (Files) ko listing ke BAHAR append karein
-        // Ye req.files ban kar jayega
-        images.forEach(img => {
+        data.append('remainingImages', JSON.stringify(existingImages));
+        newImages.forEach(img => {
             data.append('images', img);
         });
 
-        // Run in background without awaiting, so user doesn't wait
-        dispatch(submitNewListing(data))
-            .unwrap()
-            .catch((error) => console.error("Failed to create listing:", error));
-            
-        navigate('/');
+        // 2. Navigate immediately so user doesn't wait
+        navigate(`/`);
+
+        // 3. Perform background update
+        updateActivityApi(id, data)
+            .then(res => {
+                // assume structure res.data.activity
+                const updatedActivity = res.data?.activity || res.data;
+                if (updatedActivity) {
+                    dispatch(updateActivityLocally(updatedActivity));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                // Error handled in console since UI is navigated away
+            });
     };
+
+    if (loading) {
+        return <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div></div>;
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {uploading && <Toaster message="Updating your experience... 🚀" />}
             <div className="space-y-8">
                 <div>
-                    <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Host your place</h1>
-                    <p className="text-slate-500">Fill in the details below to start earning.</p>
+                    <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Edit your activity</h1>
+                    <p className="text-slate-500">Update the details below to attract more adventurers.</p>
                 </div>
 
                 {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100">{error}</div>}
@@ -91,8 +173,9 @@ const CreateListing = () => {
                     {/* Title */}
                     <input
                         type="text"
-                        placeholder="Title (e.g. Cozy Cabin in the woods)"
+                        placeholder="Title (e.g. Scuba Diving Expedition)"
                         required
+                        value={formData.title}
                         className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 outline-none transition"
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     />
@@ -102,6 +185,7 @@ const CreateListing = () => {
                         placeholder="Description"
                         rows="4"
                         required
+                        value={formData.description}
                         className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 outline-none transition"
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     ></textarea>
@@ -112,6 +196,7 @@ const CreateListing = () => {
                             type="text"
                             placeholder="Location (City)"
                             required
+                            value={formData.location}
                             className="p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 outline-none transition"
                             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         />
@@ -119,38 +204,53 @@ const CreateListing = () => {
                             type="text"
                             placeholder="Country"
                             required
+                            value={formData.country}
                             className="p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 outline-none transition"
                             onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                         />
                     </div>
 
-                    {/* Price & Category */}
+                    {/* Price & Duration */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="relative">
                             <span className="absolute left-4 top-4 text-slate-400">₹</span>
                             <input
                                 type="number"
-                                placeholder="Price per night"
+                                placeholder="Price per person"
                                 required
+                                value={formData.price}
                                 className="w-full p-4 pl-8 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 outline-none transition"
                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                             />
                         </div>
-                        <select
+                        <input
+                            type="text"
+                            placeholder="Duration (e.g. 3 hours, Full Day)"
+                            required
+                            value={formData.duration}
                             className="p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 outline-none transition bg-white"
-                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        >
-                            <option>Homestays & Guesthouses</option>
-                            <option>Hotels & Motels</option>
-                            <option>Heritage & Unique Stays</option>
-                        </select>
+                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        />
                     </div>
 
-                    {/* Tags Input (New Field) */}
+                    {/* Difficulty */}
+                    <select
+                        value={formData.difficulty}
+                        className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 outline-none transition bg-white"
+                        onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                    >
+                        <option value="Easy">Easy</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Hard">Hard</option>
+                        <option value="High-Risk">High-Risk</option>
+                    </select>
+
+                    {/* Tags Input */}
                     <div>
                         <input
                             type="text"
-                            placeholder="Tags (e.g. wifi, pool, parking - separated by commas)"
+                            placeholder="Tags (e.g. rafting, guide, nature - separated by commas)"
+                            value={formData.tags}
                             className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 outline-none transition"
                             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                         />
@@ -160,10 +260,10 @@ const CreateListing = () => {
                     {/* Image Upload Area */}
                     <div>
                         <div className="border-2 border-dashed border-slate-200 p-8 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-rose-300 transition group relative">
-                            <input type="file" multiple accept="image/*" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required={images.length === 0} />
+                            <input type="file" multiple accept="image/*" onChange={handleImageChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                             <svg className="w-10 h-10 text-slate-400 group-hover:text-rose-500 transition mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            <p className="font-medium text-slate-700 group-hover:text-rose-600 transition">Drag & drop or click to upload</p>
-                            <p className="text-xs text-slate-400 mt-1">Up to 7 images</p>
+                            <p className="font-medium text-slate-700 group-hover:text-rose-600 transition">Drag & drop or click to replace images</p>
+                            <p className="text-xs text-slate-400 mt-1">Leave empty to keep existing images</p>
                         </div>
 
                         {/* Selected Images Grid */}
@@ -172,7 +272,7 @@ const CreateListing = () => {
                                 {previews.map((preview, index) => (
                                     <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 shadow-sm">
                                         <img src={preview} className="w-full h-full object-cover" alt={`Preview ${index + 1}`} />
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={() => removeImage(index)}
                                             className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 scale-90 hover:scale-100"
@@ -191,8 +291,8 @@ const CreateListing = () => {
                         )}
                     </div>
 
-                    <button type="submit" disabled={uploading} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-rose-600 hover:shadow-lg transition-all duration-300 disabled:opacity-50">
-                        {uploading ? 'Processing...' : 'Publish Listing'}
+                    <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-rose-600 hover:shadow-lg transition-all duration-300 disabled:opacity-50">
+                        {uploading ? 'Processing...' : 'Save Edits'}
                     </button>
                 </form>
             </div>
@@ -210,26 +310,24 @@ const CreateListing = () => {
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-slate-400">
                                 <svg className="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                <span>No Image Selected</span>
+                                <span>No Image Available</span>
                             </div>
                         )}
                         <span className="absolute top-4 left-4 bg-white/95 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm">
-                            {formData.category}
+                            {formData.difficulty}
                         </span>
                     </div>
                     <div className="p-6">
                         <div className="flex justify-between items-start mb-2">
-                            <h3 className="text-xl font-bold text-slate-800 line-clamp-1">{formData.title || "Untitled Place"}</h3>
+                            <h3 className="text-xl font-bold text-slate-800 line-clamp-1">{formData.title || "Untitled Activity"}</h3>
                             <p className="font-bold text-slate-900">₹{formData.price || 0}</p>
                         </div>
-                        <p className="text-slate-500 text-sm line-clamp-2 mb-3">{formData.description || "Describe your beautiful place..."}</p>
+                        <p className="text-slate-500 text-sm line-clamp-2 mb-3">{formData.description || "Describe your brilliant experience..."}</p>
 
-                        {/* Location Preview */}
                         <p className="text-xs text-slate-400 font-medium mb-3">
                             📍 {formData.location ? `${formData.location}, ${formData.country}` : 'Location missing'}
                         </p>
 
-                        {/* Tags Preview */}
                         <div className="flex flex-wrap gap-2">
                             {formData.tags.split(',').map((tag, i) => tag.trim() && (
                                 <span key={i} className="text-[10px] bg-slate-100 px-2 py-1 rounded-md text-slate-500 font-bold uppercase">
@@ -244,4 +342,4 @@ const CreateListing = () => {
     );
 };
 
-export default CreateListing;
+export default EditActivity;

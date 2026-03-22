@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteListingApi, fetchListingById } from '../services/listingService';
-import { removeListing } from '../store/slices/listingSlice';
+import { deleteActivityApi, fetchActivityById } from '../services/activityService';
+import { removeActivity } from '../store/slices/activitySlice';
 
 import ImageModal from '../components/ImageModal';
 import ReviewSection from '../components/ReviewSection';
@@ -11,14 +11,14 @@ import ReserveBook from '../components/ReserveBook';
 import ImageGallery from '../components/ImageGallery';
 import NearbySection from '../components/NearbySection';
 
-const SingleListing = () => {
+const SingleActivity = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const { user: currentUser } = useSelector((state) => state.auth);
 
-    const [listing, setListing] = useState(null);
+    const [activityResponse, setActivityResponse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -40,8 +40,8 @@ const SingleListing = () => {
         const loadData = async () => {
             try {
                 setLoading(true);
-                const response = await fetchListingById(id);
-                setListing(response.data);
+                const response = await fetchActivityById(id);
+                setActivityResponse(response.data);
             } catch (err) {
                 setError(err.message || "Something went wrong");
             } finally {
@@ -58,9 +58,9 @@ const SingleListing = () => {
             navigate('/');
 
             // 2. Perform delete in background
-            deleteListingApi(id)
+            deleteActivityApi(id)
                 .then(() => {
-                    dispatch(removeListing(id)); // Sync with Redux state
+                    dispatch(removeActivity(id)); // Sync with Redux state
                 })
                 .catch((error) => {
                     console.error("Delete failed!", error);
@@ -76,17 +76,16 @@ const SingleListing = () => {
     if (loading) return <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div></div>;
     if (error) return <div className="text-center mt-20 text-red-500 font-bold">{error}</div>;
 
-    const data = listing?.listing;
+    const data = activityResponse?.activity || activityResponse;
     const isOwner = currentUser && data?.user && currentUser.username === data.user.username;
-    const displayTags = data?.tags?.length > 0 ? data.tags : ["wifi", "pool", "budget"];
-    const nearbyActivities = listing?.nearbyActivities;
-    const nearbyListings = listing?.nearbyListings;
+    const displayTags = data?.tags?.length > 0 ? data.tags : ["rafting", "nature", "adventure"];
+    const nearbyActivities = activityResponse?.nearbyActivities;
+    const nearbyListings = activityResponse?.nearbyListings;
 
-    const lat = listing?.latitude || 20.5937;
-    const lng = listing?.longitude || 78.9629;
+    const lat = data?.latitude || 20.5937;
+    const lng = data?.longitude || 78.9629;
 
     return (
-        // Added relative positioning here as a base
         <div className="relative">
 
             {/* Modal is rendered OUTSIDE the main container layout to avoid z-index traps */}
@@ -119,11 +118,11 @@ const SingleListing = () => {
 
                             {showMenu && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
-                                    <button onClick={() => navigate(`/edit-listing/${id}`)} className="w-full text-left px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 border-b">
-                                        Edit Listing
+                                    <button onClick={() => navigate(`/edit-activity/${id}`)} className="w-full text-left px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 border-b">
+                                        Edit Activity
                                     </button>
                                     <button onClick={handleDelete} className="w-full text-left px-4 py-3 text-sm font-semibold text-rose-600 hover:bg-rose-50">
-                                        Delete Listing
+                                        Delete Activity
                                     </button>
                                 </div>
                             )}
@@ -143,12 +142,12 @@ const SingleListing = () => {
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-slate-900">Hosted by {data?.user?.username}</h2>
-                                <p className="text-slate-500 text-sm">{data?.category}</p>
+                                <p className="text-slate-500 text-sm">Difficulty: <span className="font-semibold text-rose-500">{data?.difficulty}</span> • Duration: {data?.duration}</p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <h2 className="text-2xl font-bold text-slate-900">About this place</h2>
+                            <h2 className="text-2xl font-bold text-slate-900">About this activity</h2>
                             <p className="text-slate-600 leading-relaxed text-lg whitespace-pre-line">{data?.description}</p>
                         </div>
 
@@ -161,11 +160,11 @@ const SingleListing = () => {
                         </div>
 
                         <div className="border-t border-slate-200 pt-10">
-                            <ReviewSection reviews={data?.reviews} entityType="listings" entityId={id} />
+                            <ReviewSection reviews={data?.reviews} entityType="activities" entityId={id} />
                         </div>
                     </div>
 
-                    <ReserveBook price={data?.price} buttonText="Reserve Now" />
+                    <ReserveBook price={data?.price} buttonText="Book Now" />
                 </div>
 
                 {/* 4. Map Section */}
@@ -187,4 +186,4 @@ const SingleListing = () => {
     );
 };
 
-export default SingleListing;
+export default SingleActivity;

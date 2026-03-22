@@ -1,4 +1,4 @@
-import api from './authService';
+import api from './authServicee';
 
 export const fetchProfileApi = (username, page = 1) =>
     api.get(`/profile/${username}?page=${page}&limit=12`);

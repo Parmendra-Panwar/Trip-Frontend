@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUserProfile } from '../store/slices/profileSlice';
+import { fetchUserProfile } from '../store/slices/profileSlicee';
 import { useParams } from 'react-router-dom';
 
 import Modal from '../components/Modal';
@@ -10,7 +10,7 @@ import ProfileHeader from '../components/ProfileHeader';
 const ProfilePage = () => {
     const { username } = useParams();
     const dispatch = useDispatch();
-    const { userData, stats, posts, loading } = useSelector((state) => state.profile);
+    const { userData, stats, posts, loading, hasNext: reduxHasNext } = useSelector((state) => state.profile);
 
     const [page, setPage] = useState(1);
     const [localPosts, setLocalPosts] = useState({ trips: [], activities: [], listings: [] });
@@ -21,9 +21,13 @@ const ProfilePage = () => {
     const [editAbout, setEditAbout] = useState("");
     const [selectedRole, setSelectedRole] = useState([]);
 
+    const [localHasNext, setLocalHasNext] = useState({ trips: false, activities: false, listings: false });
+
     useEffect(() => {
-        dispatch(fetchUserProfile({ username, page: 1 }));
-    }, [dispatch, username]);
+        if (!userData || userData.username !== username) {
+            dispatch(fetchUserProfile({ username, page: 1 }));
+        }
+    }, [dispatch, username, userData?.username]);
 
     useEffect(() => {
         if (page === 1 && posts) setLocalPosts(posts);
@@ -33,7 +37,36 @@ const ProfilePage = () => {
         }
     }, [posts, userData]);
 
-    const loadMore = () => setPage(prev => prev + 1);
+    useEffect(() => {
+        if (page === 1) {
+            if (reduxHasNext) setLocalHasNext(reduxHasNext);
+        }
+    }, [reduxHasNext, page]);
+
+    const loadMore = async () => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+
+        // Fetch directly to keep it out of Redux
+        try {
+            const response = await fetchProfileApi(username, nextPage);
+            const newData = response.data;
+
+            // Append new data to existing local data
+            setLocalPosts(prev => ({
+                trips: [...prev.trips, ...newData.trips],
+                activities: [...prev.activities, ...newData.activities],
+                listings: [...prev.listings, ...newData.listings]
+            }));
+
+            // Update flags
+            setLocalHasNext(newData.hasNext);
+        } catch (error) {
+            console.error("Failed to load more");
+        }
+    };
+
+    const showLoadMoreBtn = localHasNext.trips || localHasNext.activities || localHasNext.listings;
 
     const handleUpdateAbout = async () => {
         setIsEditOpen(false);
@@ -64,7 +97,7 @@ const ProfilePage = () => {
                         <h3 className="text-xl font-bold text-slate-900 mb-6">Trips</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {localPosts.trips.map(trip => (
-                                <PostCard key={trip._id} title={trip.title} label="Trip" />
+                                <PostCard key={trip._id} id={trip._id} title={trip.title} label="Trip" images={trip.images} />
                             ))}
                         </div>
                     </section>
@@ -77,7 +110,7 @@ const ProfilePage = () => {
                                 <h3 className="text-xl font-bold text-slate-900 mb-6">Activities</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {localPosts.activities.map(act => (
-                                        <PostCard key={act._id} title={act.title} label="Activity" />
+                                        <PostCard key={act._id} id={act._id} title={act.title} label="Activity" images={act.images} />
                                     ))}
                                 </div>
                             </section>
@@ -88,19 +121,20 @@ const ProfilePage = () => {
                                 <h3 className="text-xl font-bold text-slate-900 mb-6">Listings</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {localPosts.listings.map(list => (
-                                        <PostCard key={list._id} title={list.title} label="Listing" />
+                                        <PostCard key={list._id} id={list._id} title={list.title} label="Listing" images={list.images} />
                                     ))}
                                 </div>
                             </section>
                         )}
                     </>
                 )}
-
-                <div className="flex justify-center mt-10">
-                    <button onClick={loadMore} className="px-8 py-2.5 bg-white border border-slate-300 rounded-full text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:shadow-sm transition">
-                        Load More
-                    </button>
-                </div>
+                {showLoadMoreBtn && (
+                    <div className="flex justify-center mt-10">
+                        <button onClick={loadMore} className="px-8 py-2.5 bg-white border border-slate-300 rounded-full text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:shadow-sm transition">
+                            Load More
+                        </button>
+                    </div>
+                )}
             </main>
 
             {/* Modals */}
