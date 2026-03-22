@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { signupUser, clearError } from '../store/slices/authSlice'; // signupUser thunk add kar lena
+import { signupUser, clearError } from '../store/slices/authSlicee'; // signupUser thunk add kar lena
 import { useNavigate, Link } from 'react-router-dom';
 
 const Signup = () => {

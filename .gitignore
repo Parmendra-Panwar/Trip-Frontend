@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Test files
+src/store/slices/check.jsx
+src/store/slices/profileSlicee.js
+src/store/slices/authSlicee.js
+src/store/slices/tripSlicee.js
+src/services/authServicee.js

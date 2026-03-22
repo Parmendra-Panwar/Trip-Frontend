@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUserProfile } from '../store/slices/profileSlice';
+import { fetchUserProfile } from '../store/slices/profileSlicee';
 import { useParams } from 'react-router-dom';
 
 import Modal from '../components/Modal';

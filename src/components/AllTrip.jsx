@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTrips } from '../store/slices/tripSlice';
+import { fetchTrips } from '../store/slices/tripSlicee';
 import { fetchTripsApi } from '../services/tripService';
 import TripCard from './TripCard';
 import Toaster from './Toaster';
@@ -85,7 +85,7 @@ const AllTrip = () => {
             try {
                 const response = await fetchTripsApi(lastId);
                 const fetchedItems = response.data?.trips || response.data || [];
-                
+
                 setExtraItems(prev => [...prev, ...fetchedItems]);
                 setLocalHasNextPage(response.data?.hasNextPage || false);
             } catch (err) {

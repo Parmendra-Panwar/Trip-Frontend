@@ -1,4 +1,4 @@
-import api from './authService';
+import api from './authServicee';
 
 export const fetchTripsApi = (lastId = '', limit = 12) => api.get(`/trips?lastId=${lastId}&limit=${limit}`);
 
@@ -7,7 +7,7 @@ export const fetchTripById = (id) => api.get(`/trips/${id}`);
 export const createTripApi = (formData) => {
     return api.post('/trips', formData, {
         headers: {
-            'Content-Type': undefined, 
+            'Content-Type': undefined,
         },
     });
 };

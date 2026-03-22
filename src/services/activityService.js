@@ -1,4 +1,4 @@
-import api from './authService';
+import api from './authServicee';
 
 export const fetchActivitiesApi = (lastId = '', limit = 12) => api.get(`/activities?lastId=${lastId}&limit=${limit}`);
 
@@ -7,7 +7,7 @@ export const fetchActivityById = (id) => api.get(`/activities/${id}`);
 export const createActivityApi = (formData) => {
     return api.post('/activities', formData, {
         headers: {
-            'Content-Type': undefined, 
+            'Content-Type': undefined,
         },
     });
 };

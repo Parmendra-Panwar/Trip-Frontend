@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchTripById, updateTripApi } from '../services/tripService';
-import { updateTripLocally } from '../store/slices/tripSlice';
+import { updateTripLocally } from '../store/slices/tripSlicee';
 import Toaster from '../components/Toaster';
 
 const EditTrip = () => {

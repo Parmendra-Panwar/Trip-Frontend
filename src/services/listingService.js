@@ -1,4 +1,4 @@
-import api from './authService';
+import api from './authServicee';
 
 export const fetchListingsApi = (lastId = '', limit = 12) => api.get(`/listings?lastId=${lastId}&limit=${limit}`);
 
