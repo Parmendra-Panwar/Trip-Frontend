@@ -1,4 +1,4 @@
-import api from './authServicee';
+import api from './authService';
 
 export const createReview = async (type, id, reviewData) => {
     // URL example: /listings/67890/reviews

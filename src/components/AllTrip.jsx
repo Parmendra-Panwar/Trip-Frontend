@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTrips } from '../store/slices/tripSlicee';
+import { fetchTrips } from '../store/slices/tripSlice';
 import { fetchTripsApi } from '../services/tripService';
 import TripCard from './TripCard';
-import Toaster from './Toaster';
+import { useToast } from '../hooks/useToast';
 
 const AllTrip = () => {
     const dispatch = useDispatch();
+    const toast = useToast();
+    const fallbackToastShown = useRef(false);
 
     const { items: reduxItems = [], loading: reduxLoading, hasNextPage: reduxHasNextPage } = useSelector(state => state.trips || {});
 
@@ -51,31 +53,60 @@ const AllTrip = () => {
 
     useEffect(() => {
         let isMounted = true;
-        let retryInterval;
+        let pollInterval;
+        let retryCount = 1; // Pehla attempt 3.5s par hi ho jayega
 
-        const fallbackTimer = setTimeout(() => {
-            if (isMounted) setShowFallback(true);
-        }, 2000);
-
-        const attemptFetch = () => {
+        const executeAttempt = async (count) => {
             if (!isMounted) return;
 
-            dispatch(fetchTrips('')).then((result) => {
-                if (!isMounted) return;
-                if (result.meta?.requestStatus === 'rejected') {
-                    retryInterval = setTimeout(attemptFetch, 5000);
-                }
-            });
+            // Har attempt par naya toast
+            toast.info(`Backend is waking up, showing preview... (Attempt ${count}/5)`);
+
+            const result = await dispatch(fetchTrips(''));
+
+            if (result.meta?.requestStatus === 'fulfilled') {
+                setShowFallback(false);
+                clearInterval(pollInterval);
+                return true;
+            }
+            return false;
         };
 
-        if (reduxItems.length === 0) attemptFetch();
+        const startRetries = async () => {
+            // 1. Pehla attempt turant (at 3.5s mark)
+            const success = await executeAttempt(1);
+            if (success) return;
+
+            // 2. Baki ke 4 attempts har 5 second mein
+            pollInterval = setInterval(async () => {
+                retryCount++;
+
+                if (retryCount <= 5) {
+                    const retrySuccess = await executeAttempt(retryCount);
+                    if (retrySuccess) clearInterval(pollInterval);
+                } else {
+                    // 3. All 5 attempts failed (Total ~25-28 seconds)
+                    clearInterval(pollInterval);
+                    toast.dismiss();
+                    toast.error("Sorry for the server issue. Please try again later or contact panwparmendra7@gmail.com",);
+                }
+            }, 5000);
+        };
+
+        // Initial 3.5s Loader logic
+        const fallbackTimer = setTimeout(() => {
+            if (isMounted && reduxItems.length === 0) {
+                setShowFallback(true);
+                startRetries();
+            }
+        }, 3500);
 
         return () => {
             isMounted = false;
-            clearTimeout(retryInterval);
             clearTimeout(fallbackTimer);
+            clearInterval(pollInterval);
         };
-    }, [dispatch]);
+    }, [dispatch, reduxItems.length]);
 
     const handleLoadMore = async () => {
         const lastId = allItems[allItems.length - 1]?._id;
@@ -96,14 +127,8 @@ const AllTrip = () => {
         }
     };
 
-    const shouldShowToaster = reduxItems.length === 0 && showFallback;
-
     return (
         <div className="w-full">
-            {shouldShowToaster && (
-                <Toaster message="Backend is waking up, showing preview..." />
-            )}
-
             <div>
                 <h2 className="text-[26px] font-[600] text-[#222222] tracking-tight mb-6 border-t border-[#EBEBEB] pt-12">
                     {allItems.length > 0 ? "Shared Trips & Journeys" : "Featured Trips"}

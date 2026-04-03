@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { deleteActivityApi, fetchActivityById } from '../services/activityService';
 import { removeActivity } from '../store/slices/activitySlice';
+import { useToast } from '../hooks/useToast';
+import { PageLoader, PageError } from '../components/ui';
 
 import ImageModal from '../components/ImageModal';
 import ReviewSection from '../components/ReviewSection';
@@ -17,6 +19,7 @@ const SingleActivity = () => {
     const dispatch = useDispatch();
 
     const { user: currentUser } = useSelector((state) => state.auth);
+    const toast = useToast();
 
     const [activityResponse, setActivityResponse] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -54,16 +57,16 @@ const SingleActivity = () => {
     const handleDelete = () => {
         if (window.confirm("Are you sure Want to delete?")) {
             setLoading(true);
-            // 1. Navigate immediately so user doesn't wait
+            toast.success('Activity deleted successfully.');
             navigate('/');
 
-            // 2. Perform delete in background
             deleteActivityApi(id)
                 .then(() => {
-                    dispatch(removeActivity(id)); // Sync with Redux state
+                    dispatch(removeActivity(id));
                 })
                 .catch((error) => {
                     console.error("Delete failed!", error);
+                    toast.error('Failed to delete activity.');
                 });
         }
     };
@@ -73,8 +76,8 @@ const SingleActivity = () => {
         setIsModalOpen(true);
     };
 
-    if (loading) return <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div></div>;
-    if (error) return <div className="text-center mt-20 text-red-500 font-bold">{error}</div>;
+    if (loading) return <PageLoader />;
+    if (error) return <PageError message={error} />;
 
     const data = activityResponse?.activity || activityResponse;
     const isOwner = currentUser && data?.user && currentUser.username === data.user.username;

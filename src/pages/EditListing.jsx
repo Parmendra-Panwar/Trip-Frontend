@@ -3,13 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchListingById, updateListingApi } from '../services/listingService';
 import { updateListingLocally } from '../store/slices/listingSlice';
-import Toaster from '../components/Toaster';
+import { useToast } from '../hooks/useToast';
+import { PageLoader } from '../components/ui';
 
 const EditListing = () => {
     const { id } = useParams();
     const { user } = useSelector(state => state.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState(null);
@@ -140,21 +142,21 @@ const EditListing = () => {
             .then(res => {
                 if (res.data?.listing) {
                     dispatch(updateListingLocally(res.data.listing));
+                    toast.success('Listing updated successfully!');
                 }
             })
             .catch(err => {
                 console.error(err);
-                // Can't show error visually properly here since we navigated, but we log
+                toast.error('Failed to update listing. Please try again.');
             });
     };
 
     if (loading) {
-        return <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div></div>;
+        return <PageLoader />;
     }
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {uploading && <Toaster message="Updating your magic spot... 🚀" />}
             <div className="space-y-8">
                 <div>
                     <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Edit your place</h1>
@@ -274,7 +276,7 @@ const EditListing = () => {
                         )}
                     </div>
 
-                    <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-rose-600 hover:shadow-lg transition-all duration-300 disabled:opacity-50">
+                    <button type="submit" className="cursor-pointer w-full py-4 bg-[#222222] text-white rounded-xl font-bold hover:bg-[#FF385C] hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                         {uploading ? 'Processing...' : 'Save Edits '}
                     </button>
                 </form>

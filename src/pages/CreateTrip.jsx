@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { submitNewTrip } from '../store/slices/createTripSlice';
+import { useToast } from '../hooks/useToast';
 
 const CreateTrip = () => {
     const { user } = useSelector(state => state.auth);
     const { uploading, error } = useSelector(state => state.createTrip);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const [formData, setFormData] = useState({
         title: '',
@@ -41,7 +43,7 @@ const CreateTrip = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         const tagsArray = formData.tags
             ? formData.tags.split(',').map(tag => tag.trim().toLowerCase())
             : ["mountains", "friends", "bhopal"];
@@ -63,6 +65,7 @@ const CreateTrip = () => {
             .unwrap()
             .catch((err) => console.error("Failed to create trip:", err));
 
+        toast.info('Trip is being uploaded in the background');
         navigate('/');
     };
 
@@ -130,7 +133,7 @@ const CreateTrip = () => {
                                 {previews.map((preview, index) => (
                                     <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 shadow-sm">
                                         <img src={preview} className="w-full h-full object-cover" alt={`Preview ${index + 1}`} />
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={() => removeImage(index)}
                                             className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 scale-90 hover:scale-100"
@@ -149,7 +152,7 @@ const CreateTrip = () => {
                         )}
                     </div>
 
-                    <button type="submit" disabled={uploading} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-indigo-600 hover:shadow-lg transition-all duration-300 disabled:opacity-50">
+                    <button type="submit" disabled={uploading} className="cursor-pointer w-full py-4 bg-[#222222] text-white rounded-xl font-bold hover:bg-[#FF385C] hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                         {uploading ? 'Processing...' : 'Share Trip'}
                     </button>
                 </form>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ListingImage, ActivityImage } from './FallbackImage';
 
 const NearbyCard = ({ item, type }) => {
     // Type decide karega ki link kahan jayega (/listings/:id ya /activities/:id)
@@ -8,12 +9,19 @@ const NearbyCard = ({ item, type }) => {
         <Link to={linkPath} className="group block cursor-pointer">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl mb-4 bg-slate-100">
                 {/* Thumbnail with smooth scale on hover */}
-                <img
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
-                    loading="lazy"
-                />
+                {type === 'activity' ? (
+                    <ActivityImage
+                        src={item.thumbnail}
+                        alt={item.title}
+                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
+                ) : (
+                    <ListingImage
+                        src={item.thumbnail}
+                        alt={item.title}
+                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
+                )}
 
                 {/* Distance Badge (Glassmorphism) */}
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-800 shadow-sm flex items-center gap-1">
@@ -33,7 +41,7 @@ const NearbyCard = ({ item, type }) => {
                     {item.difficulty || item.category} · {item.location?.split(',')[0] || "Location N/A"}
                 </p>
                 <p className="mt-2 text-slate-900 font-semibold">
-                    ₹{item.price.toLocaleString('en-IN')}
+                    ₹{(item?.price || 0)?.toLocaleString('en-IN')}
                     <span className="text-slate-500 font-normal text-sm"> {type === 'listing' ? '/ night' : '/ person'}</span>
                 </p>
             </div>

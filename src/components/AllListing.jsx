@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchListings } from '../store/slices/listingSlice';
 import { fetchListingsApi } from '../services/listingService';
 import ListingCard from '../components/ListingCard';
-import Toaster from '../components/Toaster';
+import { useToast } from '../hooks/useToast';
 
 const AllListing = () => {
     const dispatch = useDispatch();
+    const toast = useToast();
+    const fallbackToastShown = useRef(false);
 
     // Redux selectors (Only stores the first 12 items)
     const { items: reduxItems = [], loading: reduxLoading, hasNextPage: reduxHasNextPage } = useSelector(state => state.listings || {});
@@ -51,36 +53,64 @@ const AllListing = () => {
         },
     ];
 
-    // 1. Initial Fetch and Fallback Timer
     useEffect(() => {
         let isMounted = true;
-        let retryInterval;
+        let pollInterval;
+        let retryCount = 1;
 
-        const fallbackTimer = setTimeout(() => {
-            if (isMounted) setShowFallback(true);
-        }, 2000);
+        // Helper function to handle individual fetch attempts
+        const executeAttempt = async (count) => {
+            if (!isMounted) return false;
 
-        const attemptFetch = () => {
-            if (!isMounted) return;
+            // Har baar naya toast dikhega (1 to 5)
+            toast.info(`Backend is waking up, showing preview... (Attempt ${count}/5)`);
 
-            // Fetch only the first page via Redux
-            dispatch(fetchListings('')).then((result) => {
-                if (!isMounted) return;
-                if (result.meta?.requestStatus === 'rejected') {
-                    retryInterval = setTimeout(attemptFetch, 5000);
-                }
-            });
+            const result = await dispatch(fetchListings(''));
+
+            if (result.meta?.requestStatus === 'fulfilled') {
+                setShowFallback(false);
+                if (pollInterval) clearInterval(pollInterval);
+                return true;
+            }
+            return false;
         };
 
-        if (reduxItems.length === 0) attemptFetch();
+        const startRetries = async () => {
+            // 1. Pehla attempt turant (3.5s mark par)
+            const success = await executeAttempt(1);
+            if (success) return;
+
+            // 2. Baki ke 4 attempts har 5 second mein chalenge
+            pollInterval = setInterval(async () => {
+                if (!isMounted) return;
+                retryCount++;
+
+                if (retryCount <= 5) {
+                    const ok = await executeAttempt(retryCount);
+                    if (ok) clearInterval(pollInterval);
+                } else {
+                    // 3. Sabhi 5 attempts fail hone par final error message
+                    clearInterval(pollInterval);
+                    toast.dismiss(); // Purane info toasts clear karne ke liye
+                    toast.error("Sorry for the server issue. Please try again later or contact panwparmendra7@gmail.com");
+                }
+            }, 5000);
+        };
+
+        // Initial Loading Phase (3.5 seconds)
+        const fallbackTimer = setTimeout(() => {
+            if (isMounted && reduxItems.length === 0) {
+                setShowFallback(true); // Loader se Dummy UI par switch
+                startRetries();
+            }
+        }, 3500);
 
         return () => {
             isMounted = false;
-            clearTimeout(retryInterval);
             clearTimeout(fallbackTimer);
+            if (pollInterval) clearInterval(pollInterval);
         };
-    }, [dispatch]);
-
+    }, [dispatch, reduxItems.length]);
     // 2. Load More logic (Stored strictly in RAM locally, not Redux)
     const handleLoadMore = async () => {
         const lastId = allItems[allItems.length - 1]?._id;
@@ -90,7 +120,7 @@ const AllListing = () => {
             try {
                 const response = await fetchListingsApi(lastId);
                 const fetchedItems = response.data?.listings || response.data || [];
-                
+
                 // Keep RAM efficient: Append to local memory only
                 setExtraItems(prev => [...prev, ...fetchedItems]);
                 setLocalHasNextPage(response.data?.hasNextPage || false);
@@ -102,14 +132,8 @@ const AllListing = () => {
         }
     };
 
-    const shouldShowToaster = reduxItems.length === 0 && showFallback;
-
     return (
         <div className="w-full">
-            {shouldShowToaster && (
-                <Toaster message="Backend is waking up, showing preview..." />
-            )}
-
             <div>
                 <h2 className="text-[26px] font-[600] text-[#222222] tracking-tight mb-6 mt-6">
                     {allItems.length > 0 ? "Trending Destinations" : "Featured Preview"}

@@ -1,8 +1,11 @@
+import { Link } from 'react-router-dom';
+import FallbackImage from './FallbackImage';
+
 const ProfileHeader = ({ userData, stats, onEdit, onSettings }) => {
     return (
         <header className="p-8 border-b border-slate-100 flex flex-col md:flex-row gap-8 items-center md:items-start bg-white">
             <div className="flex-shrink-0">
-                <img
+                <FallbackImage
                     src="https://pfpmaker.com/content/img/profile-pictures/aesthetic/2.png"
                     alt={userData.username}
                     className="w-32 h-32 rounded-full object-cover border-4 border-slate-50 shadow-sm"
@@ -13,6 +16,9 @@ const ProfileHeader = ({ userData, stats, onEdit, onSettings }) => {
                 <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 w-full">
                     <h1 className="text-2xl font-bold text-slate-900">{userData.username}</h1>
                     <div className="flex gap-3">
+                        <Link to="/saved" className="px-4 py-1.5 bg-slate-100 text-slate-700 text-sm font-semibold rounded-md hover:bg-slate-200 transition">
+                            Saved
+                        </Link>
                         <button onClick={onEdit} className="px-4 py-1.5 bg-slate-100 text-slate-700 text-sm font-semibold rounded-md hover:bg-slate-200 transition">
                             Edit Profile
                         </button>

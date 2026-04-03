@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useFavorites } from '../hooks/useFavorites';
+import { TripImage } from './FallbackImage';
 
 const TripCard = ({ data }) => {
     const id = data._id || data.id;
+    const { isFavorite, toggleFavorite } = useFavorites('trip');
     const primaryImage = (data.images && data.images.length > 0 && data.images[0])
         ? data.images[0].url
         : (data.image?.url || data.image || "https://images.unsplash.com/photo-1522083165195-3424ed129620?auto=format&fit=crop&w=400&q=60");
@@ -9,7 +12,7 @@ const TripCard = ({ data }) => {
     return (
         <Link to={`/trip/${id}`} className="group cursor-pointer block">
             <div className="relative aspect-[20/19] overflow-hidden rounded-[1.25rem] bg-[#EBEBEB] mb-3">
-                <img
+                <TripImage
                     src={primaryImage}
                     alt={data.title}
                     className="h-full w-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
@@ -17,8 +20,11 @@ const TripCard = ({ data }) => {
                 <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-[800] shadow-sm uppercase tracking-wider text-[#222222]">
                     Trip
                 </span>
-                <button className="absolute top-3 right-3 p-2 group-active:scale-90 transition-transform z-10">
-                     <svg className="w-[28px] h-[28px] text-white/80 drop-shadow-md hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                <button 
+                    onClick={(e) => toggleFavorite(e, id)}
+                    className="absolute top-3 right-3 p-2 group-active:scale-90 transition-transform z-10"
+                >
+                     <svg className={`w-[28px] h-[28px] drop-shadow-md transition-colors ${isFavorite(id) ? 'text-red-500 fill-red-500' : 'text-white/80 hover:text-white'}`} fill={isFavorite(id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                 </button>
             </div>
 
