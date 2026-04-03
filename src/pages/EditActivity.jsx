@@ -3,13 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchActivityById, updateActivityApi } from '../services/activityService';
 import { updateActivityLocally } from '../store/slices/activitySlice';
-import Toaster from '../components/Toaster';
+import { useToast } from '../hooks/useToast';
+import { PageLoader } from '../components/ui';
 
 const EditActivity = () => {
     const { id } = useParams();
     const { user } = useSelector(state => state.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState(null);
@@ -142,25 +144,24 @@ const EditActivity = () => {
         // 3. Perform background update
         updateActivityApi(id, data)
             .then(res => {
-                // assume structure res.data.activity
                 const updatedActivity = res.data?.activity || res.data;
                 if (updatedActivity) {
                     dispatch(updateActivityLocally(updatedActivity));
+                    toast.success('Activity updated successfully!');
                 }
             })
             .catch(err => {
                 console.error(err);
-                // Error handled in console since UI is navigated away
+                toast.error('Failed to update activity. Please try again.');
             });
     };
 
     if (loading) {
-        return <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div></div>;
+        return <PageLoader />;
     }
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {uploading && <Toaster message="Updating your experience... 🚀" />}
             <div className="space-y-8">
                 <div>
                     <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Edit your activity</h1>
@@ -291,7 +292,7 @@ const EditActivity = () => {
                         )}
                     </div>
 
-                    <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-rose-600 hover:shadow-lg transition-all duration-300 disabled:opacity-50">
+                    <button type="submit" className="cursor-pointer w-full py-4 bg-[#222222] text-white rounded-xl font-bold hover:bg-[#FF385C] hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                         {uploading ? 'Processing...' : 'Save Edits'}
                     </button>
                 </form>

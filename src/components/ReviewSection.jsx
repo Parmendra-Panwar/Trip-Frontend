@@ -38,19 +38,20 @@ const ReviewSection = ({ reviews, entityType, entityId, onReviewAdded }) => {
                         <input
                             type="number" min="1" max="5"
                             value={rating} onChange={(e) => setRating(e.target.value)}
-                            className="w-24 p-2 border rounded-xl"
+                            className="w-24 p-2 border rounded-xl border-slate-200 focus:ring-2 focus:ring-[#FF385C] outline-none transition"
                         />
                     </div>
                 </div>
                 <textarea
                     required placeholder="What was your experience like?"
                     value={comment} onChange={(e) => setComment(e.target.value)}
-                    className="w-full p-4 border rounded-2xl mb-4 focus:ring-2 focus:ring-rose-500 outline-none"
+                    className="w-full p-4 border border-slate-200 rounded-2xl mb-4 focus:ring-2 focus:ring-[#FF385C] outline-none transition"
                     rows="3"
                 ></textarea>
                 <button
+                    type="submit"
                     disabled={loading}
-                    className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50"
+                    className="cursor-pointer bg-[#222222] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#FF385C] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? "Posting..." : "Post Review"}
                 </button>

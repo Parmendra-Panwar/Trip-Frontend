@@ -2,10 +2,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { deleteTripApi, fetchTripById } from '../services/tripService';
-import { removeTrip } from '../store/slices/tripSlicee';
+import { removeTrip } from '../store/slices/tripSlice';
+import { useToast } from '../hooks/useToast';
+import { PageLoader, PageError } from '../components/ui';
 
 import ImageModal from '../components/ImageModal';
 import ReviewSection from '../components/ReviewSection';
+import FallbackImage from '../components/FallbackImage';
 
 const SingleTrip = () => {
     const { id } = useParams();
@@ -13,6 +16,7 @@ const SingleTrip = () => {
     const dispatch = useDispatch();
 
     const { user: currentUser } = useSelector((state) => state.auth);
+    const toast = useToast();
 
     const [tripResponse, setTripResponse] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -49,6 +53,7 @@ const SingleTrip = () => {
     const handleDelete = () => {
         if (window.confirm("Are you sure Want to delete this trip?")) {
             setLoading(true);
+            toast.success('Trip deleted successfully.');
             navigate('/');
 
             deleteTripApi(id)
@@ -57,6 +62,7 @@ const SingleTrip = () => {
                 })
                 .catch((error) => {
                     console.error("Delete failed!", error);
+                    toast.error('Failed to delete trip.');
                 });
         }
     };
@@ -66,8 +72,8 @@ const SingleTrip = () => {
         setIsModalOpen(true);
     };
 
-    if (loading) return <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div></div>;
-    if (error) return <div className="text-center mt-20 text-red-500 font-bold">{error}</div>;
+    if (loading) return <PageLoader />;
+    if (error) return <PageError message={error} />;
 
     const data = tripResponse?.trip || tripResponse;
     const isOwner = currentUser && data?.user && currentUser.username === data.user.username;
@@ -86,7 +92,7 @@ const SingleTrip = () => {
             )}
 
             <div className="max-w-4xl mx-auto md:px-8 py-8">
-
+                
                 {/* Minimalist Header for Trip */}
                 <div className="flex justify-between items-start mb-6 px-4 md:px-0 relative">
                     <div>
@@ -123,18 +129,18 @@ const SingleTrip = () => {
                         <div className={`grid ${data.images.length === 1 ? 'grid-cols-1 h-[400px]' : data.images.length === 2 ? 'grid-cols-2 h-[400px]' : 'grid-cols-1 md:grid-cols-2 h-[500px]'} gap-1 bg-slate-100`}>
                             {/* Main large image */}
                             <div className="h-full cursor-pointer group relative" onClick={() => openModal(0)}>
-                                <img src={data.images[0].url} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" alt="Main" />
+                                <FallbackImage src={data.images[0].url} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" alt="Main" type="trip" />
                             </div>
-
+                            
                             {/* Additional images if any */}
                             {data.images.length > 1 && (
                                 <div className={`hidden md:grid gap-1 h-full ${data.images.length >= 3 ? 'grid-rows-2' : ''}`}>
                                     <div className="cursor-pointer overflow-hidden group relative" onClick={() => openModal(1)}>
-                                        <img src={data.images[1].url} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" alt="Secondary 1" />
+                                        <FallbackImage src={data.images[1].url} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" alt="Secondary 1" type="trip" />
                                     </div>
                                     {data.images.length >= 3 && (
                                         <div className="cursor-pointer overflow-hidden group relative" onClick={() => openModal(2)}>
-                                            <img src={data.images[2].url} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" alt="Secondary 2" />
+                                            <FallbackImage src={data.images[2].url} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" alt="Secondary 2" type="trip" />
                                             {data.images.length > 3 && (
                                                 <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center font-bold text-white text-2xl backdrop-blur-sm">
                                                     +{data.images.length - 3}
@@ -147,13 +153,13 @@ const SingleTrip = () => {
                         </div>
                     ) : (
                         <div className="h-[300px] flex justify-center items-center bg-slate-100">
-                            <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                             <div className="flex flex-col items-center justify-center h-full text-slate-400">
                                 <svg className="w-16 h-16 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 <span className="font-bold">No Memories Available</span>
                             </div>
                         </div>
                     )}
-
+                    
                     {/* Location Tag */}
                     <div className="bg-white p-4 border-t border-slate-100 flex items-center justify-center text-slate-600 font-semibold gap-2">
                         <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -163,7 +169,7 @@ const SingleTrip = () => {
 
                 {/* 3. Main Content Wrapper */}
                 <div className="bg-white md:rounded-3xl shadow-sm border border-slate-200 p-8 md:p-12 space-y-12">
-
+                    
                     {/* Author Block */}
                     <div className="flex items-center gap-4 pb-8 border-b border-slate-100">
                         <div className="w-16 h-16 rounded-[40%] bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center text-2xl font-black shadow-lg shadow-indigo-200">

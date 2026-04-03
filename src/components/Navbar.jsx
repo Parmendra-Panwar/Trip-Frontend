@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { logout } from '../store/slices/authSlicee';
+import { logout } from '../store/slices/authSlice';
 
 const Navbar = () => {
     const dispatch = useDispatch();
@@ -38,7 +38,7 @@ const Navbar = () => {
 
     return (
         <nav className="bg-white/90 backdrop-blur-xl border-b border-[#EBEBEB] sticky top-0 z-50">
-            <div className="max-w-[1440px] px-6 md:px-10 mx-auto w-full flex justify-between items-center h-[80px]">
+            <div className="max-w-[1305px] px-6 md:px-10 mx-auto w-full flex justify-between items-center h-[80px]">
 
                 {/* Logo */}
                 <Link to="/" className="flex items-center gap-2.5 group">
@@ -88,6 +88,12 @@ const Navbar = () => {
                                     <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 py-2 z-50 overflow-hidden">
                                         <div className="px-4 py-2 border-b border-gray-50 mb-1">
                                             <button onClick={() => navigate(`/profile/${user.username}`)} className="cursor-pointer w-full text-left py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Profile</button>
+                                        </div>
+
+                                        <div className="flex md:hidden flex-col items-center pr-2">
+                                            <button onClick={() => navigate('/listings')} className="cursor-pointer w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Explore Properties</button>
+                                            <button onClick={() => navigate('/activities')} className="cursor-pointer w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Trending Activities</button>
+                                            <button onClick={() => navigate('/trips')} className="cursor-pointer w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Trip Experiences</button>
                                         </div>
 
                                         {isBusiness && (

@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
+import FallbackImage from './FallbackImage';
 
 const ImageModal = ({ images, currentIndex, setCurrentIndex, onClose }) => {
     // Safety check
@@ -63,14 +64,11 @@ const ImageModal = ({ images, currentIndex, setCurrentIndex, onClose }) => {
             )}
 
             {/* Main Image Container */}
-            <div
-                className="relative w-full h-[80vh] md:h-[90vh] flex items-center justify-center px-16"
-                onClick={handleContentClick}
-            >
-                <img
+            <div className="relative w-full h-full flex items-center justify-center p-4 md:p-12" onClick={e => e.stopPropagation()}>
+                <FallbackImage
                     src={images[currentIndex]?.url}
-                    className="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-transform duration-300"
                     alt={`View ${currentIndex + 1}`}
+                    className="max-h-full max-w-full object-contain"
                 />
             </div>
 
@@ -96,12 +94,9 @@ const ImageModal = ({ images, currentIndex, setCurrentIndex, onClose }) => {
                         <button
                             key={index}
                             onClick={() => setCurrentIndex(index)}
-                            className={`relative h-14 rounded-md overflow-hidden transition-all duration-300 border-2 ${currentIndex === index
-                                    ? 'w-20 border-white opacity-100'
-                                    : 'w-14 border-transparent opacity-40 hover:opacity-100'
-                                }`}
+                            className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden transition-all duration-300 ${index === currentIndex ? 'ring-2 ring-white scale-105 opacity-100' : 'opacity-50 hover:opacity-100'}`}
                         >
-                            <img
+                            <FallbackImage
                                 src={img.url}
                                 alt={`Thumbnail ${index + 1}`}
                                 className="w-full h-full object-cover"

@@ -1,4 +1,6 @@
+import React from 'react';
 import { Link } from "react-router-dom";
+import FallbackImage from './FallbackImage';
 
 const PostCard = ({ id, title, label, images }) => {
     const imageUrl = images && images.length > 0 ? images[0].url : null;
@@ -8,7 +10,7 @@ const PostCard = ({ id, title, label, images }) => {
             {/* Image Section */}
             <div className="h-48 w-full overflow-hidden bg-slate-100 relative">
                 {imageUrl ? (
-                    <img
+                    <FallbackImage
                         src={imageUrl}
                         alt={title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

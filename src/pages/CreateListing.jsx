@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { submitNewListing } from '../store/slices/createListingSlice';
+import { useToast } from '../hooks/useToast';
 
 
 const CreateListing = () => {
@@ -9,6 +10,7 @@ const CreateListing = () => {
     const { uploading, error } = useSelector(state => state.createListing);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const [formData, setFormData] = useState({
         title: '',
@@ -73,7 +75,8 @@ const CreateListing = () => {
         dispatch(submitNewListing(data))
             .unwrap()
             .catch((error) => console.error("Failed to create listing:", error));
-            
+
+        toast.info('Listing is being uploaded in the background');
         navigate('/');
     };
 
@@ -172,7 +175,7 @@ const CreateListing = () => {
                                 {previews.map((preview, index) => (
                                     <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 shadow-sm">
                                         <img src={preview} className="w-full h-full object-cover" alt={`Preview ${index + 1}`} />
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={() => removeImage(index)}
                                             className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 scale-90 hover:scale-100"
@@ -191,7 +194,7 @@ const CreateListing = () => {
                         )}
                     </div>
 
-                    <button type="submit" disabled={uploading} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-rose-600 hover:shadow-lg transition-all duration-300 disabled:opacity-50">
+                    <button type="submit" disabled={uploading} className="cursor-pointer w-full py-4 bg-[#222222] text-white rounded-xl font-bold hover:bg-[#FF385C] hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                         {uploading ? 'Processing...' : 'Publish Listing'}
                     </button>
                 </form>
