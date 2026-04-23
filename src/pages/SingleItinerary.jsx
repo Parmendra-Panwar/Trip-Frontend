@@ -186,14 +186,15 @@ export default function SingleItinerary() {
     );
 
     // Compute totals
-    const totalSpent = itinerary.days?.reduce((acc, day) => {
+    console.log(itinerary);
+    const totalSpent = itinerary?.data?.days?.reduce((acc, day) => {
         let cost = day.selectedStay?.price || 0;
         cost += (day.selectedActivities || []).reduce((s, a) => s + (a.price || 0), 0);
         return acc + cost;
     }, 0) || 0;
 
     return (
-        <div className="max-w-[1305px] mx-auto px-6 md:px-10 pt-8 pb-16 relative">
+        <div className="max-w-[1305px] w-full mx-auto px-6 md:px-10 pt-8 pb-16 relative">
 
             <ItineraryModal
                 detailItem={detailItem}

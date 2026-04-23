@@ -11,7 +11,7 @@ const ListingCard = ({ data }) => {
 
     return (
         <Link to={`/listing/${id}`} className="group cursor-pointer block">
-            <div className="relative aspect-[20/19] overflow-hidden rounded-[1.25rem] bg-[#EBEBEB] mb-3">
+            <div className="relative aspect-[20/15] overflow-hidden rounded-xl bg-[#EBEBEB] mb-3">
                 <ListingImage
                     src={primaryImage}
                     alt={data.title}

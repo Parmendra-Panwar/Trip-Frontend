@@ -57,60 +57,61 @@ const AllListing = () => {
         let isMounted = true;
         let pollInterval;
         let retryCount = 1;
+        let fallbackTimer;
 
-        // Helper function to handle individual fetch attempts
-        const executeAttempt = async (count) => {
+        // Helper to handle the API call
+        const attemptFetch = async (isRetry, count) => {
             if (!isMounted) return false;
-
-            // Har baar naya toast dikhega (1 to 5)
-            toast.info(`Backend is waking up, showing preview... (Attempt ${count}/5)`);
+            if (isRetry) toast.info(`Backend is waking up, showing preview... (Attempt ${count}/5)`);
 
             const result = await dispatch(fetchListings(''));
 
             if (result.meta?.requestStatus === 'fulfilled') {
                 setShowFallback(false);
-                if (pollInterval) clearInterval(pollInterval);
+                clearInterval(pollInterval);
+                clearTimeout(fallbackTimer);
                 return true;
             }
             return false;
         };
 
-        const startRetries = async () => {
-            // 1. Pehla attempt turant (3.5s mark par)
-            const success = await executeAttempt(1);
+        // 1. Initial API hit immediately! (Loader should show based on your Redux loading state)
+        attemptFetch(false, 0);
+
+        // 2. Wait 5 seconds. If data isn't here, start the fallback & retry loop.
+        fallbackTimer = setTimeout(async () => {
+            if (!isMounted || reduxItems.length > 0) return;
+
+            setShowFallback(true); // Switch to Dummy UI
+
+            // Attempt 1 (at 5s mark)
+            const success = await attemptFetch(true, retryCount);
             if (success) return;
 
-            // 2. Baki ke 4 attempts har 5 second mein chalenge
+            // 3. Interval for Attempts 2 through 5 (every 5s)
             pollInterval = setInterval(async () => {
                 if (!isMounted) return;
                 retryCount++;
 
                 if (retryCount <= 5) {
-                    const ok = await executeAttempt(retryCount);
+                    const ok = await attemptFetch(true, retryCount);
                     if (ok) clearInterval(pollInterval);
                 } else {
-                    // 3. Sabhi 5 attempts fail hone par final error message
+                    // All 5 attempts failed
                     clearInterval(pollInterval);
-                    toast.dismiss(); // Purane info toasts clear karne ke liye
+                    toast.dismiss();
                     toast.error("Sorry for the server issue. Please try again later or contact panwparmendra7@gmail.com");
                 }
             }, 5000);
-        };
-
-        // Initial Loading Phase (3.5 seconds)
-        const fallbackTimer = setTimeout(() => {
-            if (isMounted && reduxItems.length === 0) {
-                setShowFallback(true); // Loader se Dummy UI par switch
-                startRetries();
-            }
-        }, 3500);
+        }, 5000);
 
         return () => {
             isMounted = false;
             clearTimeout(fallbackTimer);
-            if (pollInterval) clearInterval(pollInterval);
+            clearInterval(pollInterval);
         };
-    }, [dispatch, reduxItems.length]);
+    }, [dispatch]);
+
     // 2. Load More logic (Stored strictly in RAM locally, not Redux)
     const handleLoadMore = async () => {
         const lastId = allItems[allItems.length - 1]?._id;
