@@ -34,3 +34,4 @@ src/components/ItinerarySideCalculation.jsx
 src/components/ToastContainer.jsx
 src/components/ItinerariesTab.jsx
 src/components/FallbackImage.jsx
+src/components/CityAutocomplete.jsx
